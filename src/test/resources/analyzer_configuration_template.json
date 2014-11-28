@@ -1,0 +1,19 @@
+{
+  "index": {
+    "analysis": {
+      "analyzer": {
+        "kuromoji_suggest":{
+          "tokenizer":"kuromoji_suggest"
+        }
+      },
+
+      "tokenizer":{
+        "kuromoji_suggest":{
+          "type": "kuromoji_suggest",
+          "expand": %EXPAND%,
+          "edge_ngram": %EDGE_NGRAM%
+        }
+      }
+    }
+  }
+}

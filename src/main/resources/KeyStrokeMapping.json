@@ -1,0 +1,44 @@
+{
+  "ア":["a"], "イ":["i"], "ウ":["u"], "エ":["e"], "オ":["o"],
+  "カ":["ka"], "キ":["ki"], "ク":["ku"], "ケ":["ke"], "コ":["ko"],
+  "サ":["sa"], "シ":["si", "shi"], "ス":["su"], "セ":["se"], "ソ":["so"],
+  "タ":["ta"], "チ":["ti", "chi"], "ツ":["tu", "tsu"], "テ":["te"], "ト":["to"],
+  "ナ":["na"], "ニ":["ni"], "ヌ":["nu"], "ネ":["ne"], "ノ":["no"],
+  "ハ":["ha"], "ヒ":["hi"], "フ":["hu", "fu"], "ヘ":["he"], "ホ":["ho"],
+  "マ":["ma"], "ミ":["mi"], "ム":["mu"], "メ":["me"], "モ":["mo"],
+  "ヤ":["ya"], "ユ":["yu"], "ヨ":["yo"],
+  "ラ":["ra"], "リ":["ri"], "ル":["ru"], "レ":["re"], "ロ":["ro"],
+  "ワ":["wa"], "ヲ":["wo"], "ン":["n"],
+
+  "ァ":["xa"], "ィ":["i"], "ゥ":["u"], "ェ":["e"], "ォ":["o"],
+  "ッ":["xtu", "xtsu"],
+  "ャ":["xya"], "ュ":["xyu"], "ョ":["xyo"],
+
+  "ガ":["ga"], "ギ":["gi"], "グ":["gu"], "ゲ":["ge"], "ゴ":["go"],
+  "ザ":["za"], "ジ":["zi", "ji"], "ズ":["zu"], "ゼ":["ze"], "ゾ":["zo"],
+  "ダ":["da"], "ヂ":["di"], "ヅ":["du"], "デ":["de"], "ド":["do"],
+  "バ":["ba"], "ビ":["bi"], "ブ":["bu"], "ベ":["be"], "ボ":["bo"],
+
+  "パ":["pa"], "ピ":["pi"], "プ":["pu"], "ペ":["pe"], "ポ":["po"],
+
+  "キャ":["kya", "kixya"], "キュ":["kyu", "kixyu"], "キョ":["kyo", "kixyo"],
+  "シャ":["sya", "sha", "sixya", "shixya"], "シュ":["syu", "shu", "sixyu", "shixyu"], "ショ":["syo", "sho", "sixyo", "shixyo"],
+  "チャ":["tya", "cha", "tixya", "chixya"], "チュ":["tyu", "chu", "tixyu", "chixyu"], "チョ":["tyo", "cho", "tixyo", "chixyo"],
+  "ニャ":["nya", "nixya"], "ニュ":["nyu", "nixyu"], "ニョ":["nyo", "nixyo"],
+  "ヒャ":["hya", "hixya"], "ヒュ":["hyu", "hixyu"], "ヒョ":["hyo", "hixyo"],
+  "ミャ":["mya", "mixya"], "ミュ":["myu", "mixyu"], "ミョ":["myo", "mixyo"],
+  "リャ":["rya", "rixya"], "リュ":["ryu", "rixyu"], "リョ":["ryo", "rixyo"],
+
+  "ギャ":["gya", "gixya"], "ギュ":["gyu", "gixyu"], "ギョ":["gyo", "gixyo"],
+  "ジャ":["zya", "ja", "zixya"], "ジュ":["zyu", "ju", "zixyu"], "ジョ":["zyo", "jo", "zixyo"],
+  "ヂャ":["dya", "dixya"], "ヂュ":["dyu", "dixyu"], "ヂョ":["dyo", "dixyo"],
+  "ビャ":["bya", "bixya"], "ビュ":["byu", "bixyu"], "ビョ":["byo", "bixyo"],
+
+  "ピャ":["pya", "pixya"], "ピュ":["pyu", "pixyu"], "ピョ":["pyo", "bixyo"],
+
+  "ッカ":["kka", "xtuka", "xtsuka"], "ッキ":["kki", "xtuki", "xtsuki"], "ック":["kku", "xtuku", "xtsuku"], "ッケ":["kke", "xtuke", "xtsuke"], "ッコ":["kko", "xtuko", "xtsuko"],
+  "ッサ":["ssa", "xtusa", "xtsusa"], "ッシ":["ssi", "sshi", "xtusi", "xtsushi"], "ッス":["ssu", "xtusu", "xtsusu"], "ッセ":["sse", "xtuse", "xtsuse"], "ッソ":["sso", "xtuso", "xtsuso"],
+  "ッタ":["tta", "xtuta", "xtsuta"], "ッチ":["tti", "cchi", "xtuti", "xtsuchi"], "ッツ":["ttu", "xtutu", "xtsutsu"], "ッテ":["tte", "xtute", "xtsute"], "ット":["tto", "xtuto", "xtsuto"],
+
+  "ー":["-"], "〜":["-"]
+}
