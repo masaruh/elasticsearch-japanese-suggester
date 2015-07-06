@@ -10,6 +10,7 @@ You need to install a version matching your Elasticsearch version:
 | elasticsearch |  Kuromoji Analysis Suggest Plugin |
 |---------------|-----------------------------|
 | es-1.4        |     0.9         |
+| es-1.5        |     0.10.0         |
 
 
 ## Prerequisites
@@ -20,10 +21,8 @@ You need to install a version matching your Elasticsearch version:
 In order to install the plugin, run:
 
 ```sh
-mvn -DskipTests package
-
 # In elasticsearch home directory
-bin/plugin -u https://github.com/masaruh/elasticsearch-japanese-suggester/releases/download/0.9/elasticsearch-japanese-suggester-0.9.zip -i japanese-suggester
+bin/plugin -u https://github.com/masaruh/elasticsearch-japanese-suggester/releases/download/0.10.0/elasticsearch-japanese-suggester-0.10.0.zip -i japanese-suggester
 ```
 
 ### Example
@@ -60,16 +59,14 @@ curl -XPUT 'http://localhost:9200/suggest_sample/' -d'
 
 Then add completion suggester configuration:
 ```sh
-curl -XPUT 'http://localhost:9200/suggest_sample/_mapping' -d'
+curl -XPUT 'http://localhost:9200/suggest_sample/test/_mapping' -d'
 {
-  "test": {
-    "properties": {
-      "suggest": {
-        "type": "japanese_completion",
-        "index_analyzer": "kuromoji_suggest_index",
-        "search_analyzer": "kuromoji_suggest_search",
-        "payloads": true
-      }
+  "properties": {
+    "suggest": {
+      "type": "japanese_completion",
+      "index_analyzer": "kuromoji_suggest_index",
+      "search_analyzer": "kuromoji_suggest_search",
+      "payloads": true
     }
   }
 }
