@@ -1,14 +1,14 @@
 package org.elasticsearch.search.suggest.completion;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.action.suggest.SuggestResponse;
-import org.elasticsearch.common.base.Function;
-import org.elasticsearch.common.collect.Iterables;
-import org.elasticsearch.common.collect.Lists;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.plugin.JapaneseSuggesterPlugin;
 import org.elasticsearch.search.suggest.Suggest;
-import org.elasticsearch.test.ElasticsearchIntegrationTest;
+import org.elasticsearch.test.ESIntegTestCase;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -19,14 +19,15 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
-@ElasticsearchIntegrationTest.ClusterScope(scope= ElasticsearchIntegrationTest.Scope.TEST, numDataNodes =1)
-public class JapaneseCompletionSuggesterTest extends ElasticsearchIntegrationTest {
+@LuceneTestCase.SuppressCodecs("*")
+public class JapaneseCompletionSuggesterTest extends ESIntegTestCase {
     private static final String INDEX = "test_index";
     private static final String TYPE = "test_type";
+    private static final String FIELD = "suggest";
 
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
-        return ImmutableSettings.settingsBuilder().put(super.nodeSettings(nodeOrdinal)).put("plugin.types", JapaneseSuggesterPlugin.class.getName()).build();
+        return Settings.settingsBuilder().put(super.nodeSettings(nodeOrdinal)).put("plugin.types", JapaneseSuggesterPlugin.class.getName()).build();
     }
 
     @Test
@@ -80,9 +81,9 @@ public class JapaneseCompletionSuggesterTest extends ElasticsearchIntegrationTes
                         jsonBuilder()
                             .startObject()
                                 .startObject("properties")
-                                    .startObject("suggest")
+                                    .startObject(FIELD)
                                         .field("type", "japanese_completion")
-                                        .field("index_analyzer", "kuromoji_suggest_index")
+                                        .field("analyzer", "kuromoji_suggest_index")
                                         .field("search_analyzer", "kuromoji_suggest_search")
                                     .endObject()
                                 .endObject()
@@ -105,10 +106,8 @@ public class JapaneseCompletionSuggesterTest extends ElasticsearchIntegrationTes
 
     private void assertSuggestResult(String input, String... expected) throws IOException {
         SuggestResponse response = client().prepareSuggest(INDEX)
-                .setSuggestText(input).addSuggestion(new JapaneseCompletionSuggestionBuilder("suggestion").field("suggest"))
+                .addSuggestion(new JapaneseCompletionSuggestionBuilder("suggestion").field(FIELD).text(input))
                 .execute().actionGet();
-
-//        System.out.println(response.getSuggest());
 
         Assert.assertThat(response.getSuggest().size(), is(1));
         Suggest suggest = response.getSuggest();

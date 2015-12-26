@@ -1,5 +1,6 @@
 package org.elasticsearch.analysis;
 
+import com.google.common.collect.Sets;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.ja.JapaneseTokenizer;
 import org.apache.lucene.analysis.ja.tokenattributes.ReadingAttribute;
@@ -7,10 +8,8 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionLengthAttribute;
-import org.elasticsearch.common.collect.Sets;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -47,13 +46,11 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
     private Iterator<String> terms;
     private boolean first = true; // First token or not.
 
-    public KuromojiSuggestTokenizer(boolean expand, boolean edgeNGram, Reader input) {
-        super(input);
-
+    public KuromojiSuggestTokenizer(boolean expand, boolean edgeNGram) {
         this.expand = expand;
         this.edgeNGram = edgeNGram;
 
-        this.kuromoji = new JapaneseTokenizer(input, null, false, JapaneseTokenizer.Mode.NORMAL);
+        this.kuromoji = new JapaneseTokenizer(null, false, JapaneseTokenizer.Mode.NORMAL);
     }
 
     @Override

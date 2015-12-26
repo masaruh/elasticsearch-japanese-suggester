@@ -5,6 +5,13 @@
         <format>zip</format>
     </formats>
     <includeBaseDirectory>false</includeBaseDirectory>
+    <files>
+        <file>
+            <source>${project.basedir}/src/main/resources/plugin-descriptor.properties</source>
+            <outputDirectory>/</outputDirectory>
+            <filtered>true</filtered>
+        </file>
+    </files>
     <dependencySets>
         <dependencySet>
             <outputDirectory>/</outputDirectory>
@@ -20,6 +27,14 @@
             <useTransitiveFiltering>true</useTransitiveFiltering>
             <includes>
                 <include>com.fasterxml.jackson.core:jackson-databind</include>
+            </includes>
+        </dependencySet>
+        <dependencySet>
+            <outputDirectory>/</outputDirectory>
+            <useProjectArtifact>true</useProjectArtifact>
+            <useTransitiveFiltering>true</useTransitiveFiltering>
+            <includes>
+                <include>org.apache.lucene:lucene-analyzers-kuromoji</include>
             </includes>
         </dependencySet>
     </dependencySets>
