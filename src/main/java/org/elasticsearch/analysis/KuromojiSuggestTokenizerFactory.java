@@ -9,8 +9,6 @@ import org.elasticsearch.index.Index;
 import org.elasticsearch.index.analysis.AbstractTokenizerFactory;
 import org.elasticsearch.index.settings.IndexSettings;
 
-import java.io.Reader;
-
 public class KuromojiSuggestTokenizerFactory extends AbstractTokenizerFactory {
     private final boolean expand;
     private final boolean edgeNGram;
@@ -24,7 +22,7 @@ public class KuromojiSuggestTokenizerFactory extends AbstractTokenizerFactory {
     }
 
     @Override
-    public Tokenizer create(Reader reader) {
-        return new KuromojiSuggestTokenizer(this.expand, this.edgeNGram, reader);
+    public Tokenizer create() {
+        return new KuromojiSuggestTokenizer(this.expand, this.edgeNGram);
     }
 }

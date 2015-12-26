@@ -1,16 +1,16 @@
 package org.elasticsearch.index.analysis;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.common.io.Files;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.ngram.EdgeNGramTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
-import org.elasticsearch.common.collect.Lists;
-import org.elasticsearch.common.collect.Sets;
 import org.elasticsearch.common.inject.Injector;
 import org.elasticsearch.common.inject.ModulesBuilder;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsModule;
 import org.elasticsearch.env.Environment;
@@ -18,7 +18,6 @@ import org.elasticsearch.env.EnvironmentModule;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.IndexNameModule;
 import org.elasticsearch.index.settings.IndexSettingsModule;
-import org.elasticsearch.indices.analysis.IndicesAnalysisModule;
 import org.elasticsearch.indices.analysis.IndicesAnalysisService;
 import org.elasticsearch.plugin.JapaneseSuggesterPlugin;
 import org.junit.Assert;
@@ -29,7 +28,9 @@ import java.io.*;
 import java.util.List;
 import java.util.Set;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertThat;
 
 public class KuromojiSuggestAnalysisTest {
@@ -81,7 +82,8 @@ public class KuromojiSuggestAnalysisTest {
     private List<String> edgeNgram(List<String> inputs) throws IOException {
         Set<String> result = Sets.newLinkedHashSet(); // Deduplicate.
         for (String input : inputs) {
-            EdgeNGramTokenizer edgeNGramTokenizer = new EdgeNGramTokenizer(new StringReader(input), 1, Integer.MAX_VALUE);
+            EdgeNGramTokenizer edgeNGramTokenizer = new EdgeNGramTokenizer(1, Integer.MAX_VALUE);
+            edgeNGramTokenizer.setReader(new StringReader(input));
             result.addAll(readStream(edgeNGramTokenizer));
             edgeNGramTokenizer.close();
         }
@@ -112,23 +114,21 @@ public class KuromojiSuggestAnalysisTest {
         return result;
     }
 
-    private Analyzer createAnalyzer(boolean expand, boolean edgeNGram) {
+    public Analyzer createAnalyzer(boolean expand, boolean edgeNGram) {
         String analyzerSetting = settingTemplate.replace("%EXPAND%", "" + expand).replace("%EDGE_NGRAM%", "" + edgeNGram);
 
-        Settings settings = ImmutableSettings.settingsBuilder().loadFromSource(analyzerSetting)
+        Settings settings = Settings.settingsBuilder().loadFromSource(analyzerSetting)
                 .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
+                .put("path.home", Files.createTempDir())
                 .build();
 
         Index index = new Index("test");
-
         Injector parentInjector = new ModulesBuilder().add(new SettingsModule(settings),
-                new EnvironmentModule(new Environment(settings)),
-                new IndicesAnalysisModule())
+                new EnvironmentModule(new Environment(settings)))
                 .createInjector();
 
         AnalysisModule analysisModule = new AnalysisModule(settings, parentInjector.getInstance(IndicesAnalysisService.class));
         new JapaneseSuggesterPlugin().onModule(analysisModule);
-
         Injector injector = new ModulesBuilder().add(
                 new IndexSettingsModule(index, settings),
                 new IndexNameModule(index),

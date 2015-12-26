@@ -2,7 +2,7 @@ Completion suggester for Japanese for Elasticsearch
 ==================================
 
 This plugin includes:
-* "kuromoji_suggest" tokenizer, extension for Japanese (kuromoji) Analysis plugin (https://github.com/elasticsearch/elasticsearch-analysis-kuromoji) to enable query completion.
+* "kuromoji_suggest" tokenizer, extension for Lucene's Japanese (kuromoji) Analyzer to enable query completion.
 * "japanese_completion" suggester, customized completion suggester for Japanese.
 
 You need to install a version matching your Elasticsearch version:
@@ -12,10 +12,10 @@ You need to install a version matching your Elasticsearch version:
 | es-1.4        |     0.9         |
 | es-1.5        |     0.10.0         |
 | es-1.6        |     0.11.0         |
+| es-2.0.0        |     0.20.0         |
 
 
 ## Prerequisites
-* analysis-kuromoji plugin (https://github.com/elasticsearch/elasticsearch-analysis-kuromoji)
 * (Optional) To deal with full-width and half-width characters, elasticsearch-analysis-icu(https://github.com/elasticsearch/elasticsearch-analysis-icu)
 
 ## Installation
@@ -23,7 +23,7 @@ In order to install the plugin, run:
 
 ```sh
 # In elasticsearch home directory
-bin/plugin -u https://github.com/masaruh/elasticsearch-japanese-suggester/releases/download/0.10.0/elasticsearch-japanese-suggester-0.10.0.zip -i japanese-suggester
+bin/plugin install https://github.com/masaruh/elasticsearch-japanese-suggester/releases/download/0.20.0/elasticsearch-japanese-suggester-0.20.0.zip
 ```
 
 ### Example

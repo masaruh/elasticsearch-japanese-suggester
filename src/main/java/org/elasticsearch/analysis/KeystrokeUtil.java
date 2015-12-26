@@ -3,8 +3,8 @@ package org.elasticsearch.analysis;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.elasticsearch.common.base.Throwables;
-import org.elasticsearch.common.collect.Lists;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.io.InputStream;
