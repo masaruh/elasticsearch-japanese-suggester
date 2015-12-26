@@ -1,5 +1,6 @@
 package org.elasticsearch.analysis;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.ja.JapaneseTokenizer;
@@ -106,9 +107,11 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
         // It may contain Hiragana. Convert it to Katakana.
         hiraganaToKatakana(readingBuilder);
 
-        List<String> keyStrokes = KeystrokeUtil.toKeyStrokes(readingBuilder.toString());
-        if (!this.expand) {
-            keyStrokes = keyStrokes.subList(0, 1);
+        List<String> keyStrokes;
+        if (this.expand) {
+            keyStrokes = KeystrokeUtil.toKeyStrokes(readingBuilder.toString());
+        } else {
+            keyStrokes = Lists.newArrayList(KeystrokeUtil.toCanonicalKeystroke(readingBuilder.toString()));
         }
 
         // Add original input as "keystroke"
