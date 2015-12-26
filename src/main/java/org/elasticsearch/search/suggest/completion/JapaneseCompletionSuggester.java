@@ -96,7 +96,6 @@ public class JapaneseCompletionSuggester extends CompletionSuggester {
 
     private int lastIndexOfKanji(String input) {
         for (int i = input.length() - 1; i >= 0; i--) {
-            Character.UnicodeBlock b = Character.UnicodeBlock.of(input.charAt(i));
             if (Character.UnicodeBlock.of(input.charAt(i)).equals(Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS)) {
                 return i;
             }

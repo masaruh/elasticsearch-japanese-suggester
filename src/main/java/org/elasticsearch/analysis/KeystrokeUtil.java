@@ -28,6 +28,17 @@ public class KeystrokeUtil {
     }
 
     /**
+     * Convert reading to canonical key stroke.
+     * See {@link #toKeyStrokes(String)}.
+     *
+     * @param reading reading "basically" in Katakana.
+     */
+    public static String toCanonicalKeystroke(String reading) {
+        KeystrokeBuilder builder = buildKeystrokes(reading);
+        return builder.canonicalKeyStroke();
+    }
+
+    /**
      * Convert reading to key strokes.
      * Input reading is expected to be in Katakana produced by {@link org.apache.lucene.analysis.ja.JapaneseTokenizer}.
      * However, since there are words/characters that {@link org.apache.lucene.analysis.ja.JapaneseTokenizer} can't tokenize,
@@ -36,6 +47,11 @@ public class KeystrokeUtil {
      * @param reading reading "basically" in Katakana.
      */
     public static List<String> toKeyStrokes(String reading) {
+        KeystrokeBuilder builder = buildKeystrokes(reading);
+        return builder.keyStrokes();
+    }
+
+    private static KeystrokeBuilder buildKeystrokes(String reading) {
         KeystrokeBuilder builder = new KeystrokeBuilder();
 
         int pos = 0;
@@ -62,7 +78,7 @@ public class KeystrokeUtil {
                 //  - kuromoji doesn't know the word.
                 // In that case we treat the character as key stroke.
                 if (keyStrokeFragments == null) {
-                    keyStrokeFragments = Lists.newArrayList(reading.substring(pos, pos + 1));
+                    keyStrokeFragments = Lists.newArrayList(ch);
                 }
 
                 pos++;
@@ -71,7 +87,7 @@ public class KeystrokeUtil {
             builder.append(keyStrokeFragments);
         }
 
-        return builder.keyStrokes();
+        return builder;
     }
 
     private static class KeystrokeBuilder {
@@ -89,6 +105,10 @@ public class KeystrokeUtil {
 
         public List<String> keyStrokes() {
             return this.root.keyStrokes();
+        }
+
+        public String canonicalKeyStroke() {
+            return this.root.keyStroke();
         }
     }
 
@@ -121,6 +141,14 @@ public class KeystrokeUtil {
             }
 
             return result;
+        }
+
+        public String keyStroke() {
+            if (this.child == null) {
+                return this.keyStrokes.get(0);
+            }
+
+            return this.keyStrokes.get(0) + this.child.keyStroke();
         }
     }
 
