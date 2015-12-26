@@ -109,7 +109,7 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
 
         List<String> keyStrokes;
         if (this.expand) {
-            keyStrokes = KeystrokeUtil.toKeyStrokes(readingBuilder.toString());
+            keyStrokes = Lists.newArrayList(KeystrokeUtil.toKeyStrokes(readingBuilder.toString()));
         } else {
             keyStrokes = Lists.newArrayList(KeystrokeUtil.toCanonicalKeystroke(readingBuilder.toString()));
         }
