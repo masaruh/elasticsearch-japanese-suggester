@@ -61,22 +61,27 @@ public class KuromojiSuggestAnalysisTest {
 
     @Test
     public void testNoExpandNoEdgeNGram() throws IOException {
-        testTokenization(createAnalyzer(false, false), KEY_STROKES.subList(0, 2));
+        testTokenization(createAnalyzer(false, false), INPUT, KEY_STROKES.subList(0, 2));
     }
 
     @Test
     public void testExpandNoEdgeNgram() throws IOException {
-        testTokenization(createAnalyzer(true, false), KEY_STROKES);
+        testTokenization(createAnalyzer(true, false), INPUT, KEY_STROKES);
     }
 
     @Test
     public void testNoExpandEdgeNgram() throws IOException {
-        testTokenization(createAnalyzer(false, true), edgeNgram(KEY_STROKES.subList(0, 2)));
+        testTokenization(createAnalyzer(false, true), INPUT, edgeNgram(KEY_STROKES.subList(0, 2)));
     }
 
     @Test
     public void testExpandEdgeNgram() throws IOException {
-        testTokenization(createAnalyzer(true, true), edgeNgram(KEY_STROKES));
+        testTokenization(createAnalyzer(true, true), INPUT, edgeNgram(KEY_STROKES));
+    }
+
+    @Test
+    public void testDedupInput() throws IOException {
+        testTokenization(createAnalyzer(true, false), "aa", Lists.newArrayList("aa"));
     }
 
     private List<String> edgeNgram(List<String> inputs) throws IOException {
@@ -91,8 +96,8 @@ public class KuromojiSuggestAnalysisTest {
         return Lists.newArrayList(result);
     }
 
-    private void testTokenization(Analyzer analyzer, List<String> expected) throws IOException {
-        TokenStream stream = analyzer.tokenStream("dummy", INPUT);
+    private void testTokenization(Analyzer analyzer, String input, List<String> expected) throws IOException {
+        TokenStream stream = analyzer.tokenStream("dummy", input);
         List<String> result = readStream(stream);
 
         // Compare two lists in order insensitive manner.
