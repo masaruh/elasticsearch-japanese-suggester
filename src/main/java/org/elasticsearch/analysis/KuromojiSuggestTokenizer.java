@@ -93,15 +93,15 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
         StringBuilder readingBuilder = new StringBuilder();
         StringBuilder surfaceFormBuilder = new StringBuilder();
         while (this.kuromoji.incrementToken()) {
-            String reading = this.kuromoji.getAttribute(ReadingAttribute.class).getReading();
-            String surfaceForm = this.kuromoji.getAttribute(CharTermAttribute.class).toString();
+            String readingFragment = this.kuromoji.getAttribute(ReadingAttribute.class).getReading();
+            String surfaceFormFragment = this.kuromoji.getAttribute(CharTermAttribute.class).toString();
 
-            if (reading == null) {
+            if (readingFragment == null) {
                 // Use surface form if kuromoji can't produce reading.
-                reading = surfaceForm;
+                readingFragment = surfaceFormFragment;
             }
-            readingBuilder.append(reading);
-            surfaceFormBuilder.append(surfaceForm);
+            readingBuilder.append(readingFragment);
+            surfaceFormBuilder.append(surfaceFormFragment);
         }
 
         // It may contain Hiragana. Convert it to Katakana.
@@ -116,7 +116,11 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
 
         // Add original input as "keystroke"
         // Kuromoji doesn't always produce correct reading. So, we use original input for matching too.
-        keyStrokes.add(surfaceFormBuilder.toString());
+        String surfaceForm = surfaceFormBuilder.toString();
+        if (!keyStrokes.contains(surfaceForm)) {
+            keyStrokes.add(surfaceForm);
+        }
+
         this.terms = this.edgeNGram ? toEdgeNGrams(keyStrokes) : keyStrokes.iterator();
         this.first = true;
     }
