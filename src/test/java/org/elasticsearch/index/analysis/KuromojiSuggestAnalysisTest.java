@@ -84,6 +84,13 @@ public class KuromojiSuggestAnalysisTest {
         testTokenization(createAnalyzer(true, false), "aa", Lists.newArrayList("aa"));
     }
 
+    @Test
+    public void testKanjiAndAlphaNumeric() throws IOException {
+        testTokenization(createAnalyzer(true, false), "2015年", Lists.newArrayList("2015年", "2015nen"));
+        testTokenization(createAnalyzer(true, false), "第138回", Lists.newArrayList("第138回", "dai138kai"));
+        testTokenization(createAnalyzer(true, false), "A型", Lists.newArrayList("A型", "Agata"));
+    }
+
     private List<String> edgeNgram(List<String> inputs) throws IOException {
         Set<String> result = Sets.newLinkedHashSet(); // Deduplicate.
         for (String input : inputs) {
@@ -101,7 +108,6 @@ public class KuromojiSuggestAnalysisTest {
         List<String> result = readStream(stream);
 
         // Compare two lists in order insensitive manner.
-        Assert.assertThat(result, hasSize(expected.size()));
         Assert.assertThat(Sets.newHashSet(result), hasSize(result.size())); // No duplicates.
         Assert.assertThat(Sets.newHashSet(result), equalTo(Sets.newHashSet(expected)));
 

@@ -59,35 +59,49 @@ public class KeystrokeUtil {
         while (pos < len) {
             List<String> keyStrokeFragments = null;
 
-            // Try two characters lookup.
-            // ("キャ", "キュ"..etc)
-            if (pos + 2 <= len) {
-                keyStrokeFragments = KEY_STROKE_MAP.get(reading.substring(pos, pos + 2));
-                if (keyStrokeFragments != null) {
-                    pos += 2;
+            if (isKatakana(reading.charAt(pos))) {
+                // Try two characters lookup.
+                // ("キャ", "キュ"..etc)
+                if (pos + 2 <= len) {
+                    keyStrokeFragments = KEY_STROKE_MAP.get(reading.substring(pos, pos + 2));
+                    if (keyStrokeFragments != null) {
+                        pos += 2;
+                    }
                 }
-            }
 
-            // If not found, single character lookup.
-            if (keyStrokeFragments == null) {
-                String ch = reading.substring(pos, pos + 1);
-                keyStrokeFragments = KEY_STROKE_MAP.get(ch);
-
-                // There are cases we don't find key strokes for it.
-                //  - Not Japanese
-                //  - kuromoji doesn't know the word.
-                // In that case we treat the character as key stroke.
+                // If not found, single character lookup.
                 if (keyStrokeFragments == null) {
-                    keyStrokeFragments = Lists.newArrayList(ch);
+                    String ch = reading.substring(pos, pos + 1);
+                    keyStrokeFragments = KEY_STROKE_MAP.get(ch);
+
+                    // There are cases we don't find key strokes for it.
+                    //  - Not Japanese
+                    //  - kuromoji doesn't know the word.
+                    // In that case we treat the character as key stroke.
+                    if (keyStrokeFragments == null) {
+                        keyStrokeFragments = Lists.newArrayList(ch);
+                    }
+
+                    pos++;
+                }
+            } else {
+                // Consume consecutive non-Katakana input.
+                int from = pos;
+                while (pos < len && !isKatakana(reading.charAt(pos))) {
+                    pos++;
                 }
 
-                pos++;
+                keyStrokeFragments = Lists.newArrayList(reading.substring(from, pos));
             }
 
             builder.append(keyStrokeFragments);
         }
 
         return builder;
+    }
+
+    private static boolean isKatakana(char c) {
+        return 0x30A0 <= c && c <= 0x30FF;
     }
 
     private static class KeystrokeBuilder {
