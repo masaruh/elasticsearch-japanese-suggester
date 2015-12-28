@@ -34,6 +34,10 @@ public class KeystrokeUtil {
      * @param reading reading "basically" in Katakana.
      */
     public static String toCanonicalKeystroke(String reading) {
+        if (!hasKatakana(reading)) {
+            return reading;
+        }
+
         KeystrokeBuilder builder = buildKeystrokes(reading);
         return builder.canonicalKeyStroke();
     }
@@ -47,8 +51,22 @@ public class KeystrokeUtil {
      * @param reading reading "basically" in Katakana.
      */
     public static List<String> toKeyStrokes(String reading) {
+        if (!hasKatakana(reading)) {
+            return Lists.newArrayList(reading);
+        }
+
         KeystrokeBuilder builder = buildKeystrokes(reading);
         return builder.keyStrokes();
+    }
+
+    private static boolean hasKatakana(String input) {
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (0x30A0 <= c && c <= 0x30FF) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static KeystrokeBuilder buildKeystrokes(String reading) {
