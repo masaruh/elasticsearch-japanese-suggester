@@ -13,6 +13,8 @@ You need to install a version matching your Elasticsearch version:
 | es-1.5        |     0.10.0         |
 | es-1.6        |     0.11.0         |
 | es-2.0.0        |     0.20.0         |
+| es-2.0.1        |     0.20.1         |
+| es-2.0.2        |     0.20.2         |
 
 
 ## Prerequisites
