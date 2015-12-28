@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +21,12 @@ public class KeystrokeUtil {
     static {
         try (InputStream in = KeystrokeBuilder.class.getClassLoader().getResourceAsStream("KeyStrokeMapping.json")) {
             ObjectMapper mapper = new ObjectMapper();
-            KEY_STROKE_MAP = mapper.readValue(in, new TypeReference<Map<String, List<String>>>(){});
+            Map<String, List<String>> tmp = mapper.readValue(in, new TypeReference<Map<String, List<String>>>(){});
+
+            for (String key : tmp.keySet()) {
+                tmp.put(key, Collections.unmodifiableList(tmp.get(key)));
+            }
+            KEY_STROKE_MAP = Collections.unmodifiableMap(tmp);
 
         } catch (IOException e) {
             throw Throwables.propagate(e);
@@ -105,15 +111,13 @@ public class KeystrokeUtil {
     }
 
     private static class KeystrokeBuilder {
-        private Node root;
+        private RootNode root;
 
         public void append(List<String> keyStrokes) {
-            Node node = new Node(keyStrokes);
-
             if (this.root == null) {
-                this.root = node;
+                this.root = new RootNode(keyStrokes);
             } else {
-                this.root.append(node);
+                this.root.append(new Node(keyStrokes));
             }
         }
 
@@ -127,8 +131,8 @@ public class KeystrokeUtil {
     }
 
     private static class Node {
-        private final List<String> keyStrokes;
-        private Node child;
+        protected final List<String> keyStrokes;
+        protected Node child;
 
         public Node(List<String> keyStrokes) {
             this.keyStrokes = keyStrokes;
@@ -166,4 +170,20 @@ public class KeystrokeUtil {
         }
     }
 
+    private static class RootNode extends Node {
+        public RootNode(List<String> keyStrokes) {
+            super(keyStrokes);
+        }
+
+        @Override
+        public List<String> keyStrokes() {
+            // If it doesn't have child, create new list (keyStrokes is original contents of KEY_STROKE_MAP).
+            if (this.child == null) {
+                List<String> result = Lists.newArrayList();
+                result.addAll(this.keyStrokes);
+                return result;
+            }
+            return super.keyStrokes();
+        }
+    }
 }
