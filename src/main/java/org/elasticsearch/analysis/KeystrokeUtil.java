@@ -80,10 +80,7 @@ public class KeystrokeUtil {
                     String ch = reading.substring(pos, pos + 1);
                     keyStrokeFragments = KEY_STROKE_MAP.get(ch);
 
-                    // There are cases we don't find key strokes for it.
-                    //  - Not Japanese
-                    //  - kuromoji doesn't know the word.
-                    // In that case we treat the character as key stroke.
+                    // There are Katakana characters that aren't in KEY_STROKE_MAP.
                     if (keyStrokeFragments == null) {
                         keyStrokeFragments = Lists.newArrayList(ch);
                     }
@@ -91,6 +88,11 @@ public class KeystrokeUtil {
                     pos++;
                 }
             } else {
+                // There are cases the chacter isn't Katakana.
+                //  - Not Japanese
+                //  - kuromoji doesn't know the word.
+                // In that case we treat the character as key stroke.
+
                 // Consume consecutive non-Katakana input.
                 int from = pos;
                 while (pos < len && !isKatakana(reading.charAt(pos))) {
