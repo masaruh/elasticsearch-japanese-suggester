@@ -11,6 +11,7 @@
         "kuromoji_suggest":{
           "type": "kuromoji_suggest",
           "expand": %EXPAND%,
+          "max_expansions": %MAX_EXPANSIONS%,
           "edge_ngram": %EDGE_NGRAM%
         }
       }

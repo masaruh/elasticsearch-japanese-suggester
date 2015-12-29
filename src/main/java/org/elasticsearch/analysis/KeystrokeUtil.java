@@ -35,7 +35,7 @@ public class KeystrokeUtil {
 
     /**
      * Convert reading to canonical key stroke.
-     * See {@link #toKeyStrokes(String)}.
+     * See {@link #toKeyStrokes(String, int)}.
      *
      * @param reading reading "basically" in Katakana.
      */
@@ -52,9 +52,9 @@ public class KeystrokeUtil {
      *
      * @param reading reading "basically" in Katakana.
      */
-    public static List<String> toKeyStrokes(String reading) {
+    public static List<String> toKeyStrokes(String reading, int maxExpansions) {
         KeystrokeBuilder builder = buildKeystrokes(reading);
-        return builder.keyStrokes();
+        return builder.keyStrokes(maxExpansions);
     }
 
     private static KeystrokeBuilder buildKeystrokes(String reading) {
@@ -123,8 +123,8 @@ public class KeystrokeUtil {
             }
         }
 
-        public List<String> keyStrokes() {
-            return this.root.keyStrokes();
+        public List<String> keyStrokes(int maxExpansions) {
+            return this.root.keyStrokes(maxExpansions);
         }
 
         public String canonicalKeyStroke() {
@@ -148,15 +148,18 @@ public class KeystrokeUtil {
             }
         }
 
-        public List<String> keyStrokes() {
+        public List<String> keyStrokes(int maxExpansions) {
             if (this.child == null) {
                 return this.keyStrokes;
             }
 
             List<String> result = Lists.newArrayList();
-            for (String tail : this.child.keyStrokes()) {
+            for (String tail : this.child.keyStrokes(maxExpansions)) {
                 for (String stroke : this.keyStrokes) {
                     result.add(stroke + tail);
+                    if (result.size() >= maxExpansions) {
+                        return result;
+                    }
                 }
             }
 
@@ -178,14 +181,14 @@ public class KeystrokeUtil {
         }
 
         @Override
-        public List<String> keyStrokes() {
+        public List<String> keyStrokes(int maxExpansions) {
             // If it doesn't have child, create new list (keyStrokes is original contents of KEY_STROKE_MAP).
             if (this.child == null) {
                 List<String> result = Lists.newArrayList();
                 result.addAll(this.keyStrokes);
                 return result;
             }
-            return super.keyStrokes();
+            return super.keyStrokes(maxExpansions);
         }
     }
 }
