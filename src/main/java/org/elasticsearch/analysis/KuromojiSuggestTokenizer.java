@@ -42,13 +42,15 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
     private final JapaneseTokenizer kuromoji;
 
     private final boolean expand;
+    private final int maxExpansions;
     private final boolean edgeNGram;
 
     private Iterator<String> terms;
     private boolean first = true; // First token or not.
 
-    public KuromojiSuggestTokenizer(boolean expand, boolean edgeNGram) {
+    public KuromojiSuggestTokenizer(boolean expand, int maxExpansions, boolean edgeNGram) {
         this.expand = expand;
+        this.maxExpansions = maxExpansions;
         this.edgeNGram = edgeNGram;
 
         this.kuromoji = new JapaneseTokenizer(null, false, JapaneseTokenizer.Mode.NORMAL);
@@ -109,7 +111,7 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
 
         List<String> keyStrokes;
         if (this.expand) {
-            keyStrokes = KeystrokeUtil.toKeyStrokes(readingBuilder.toString());
+            keyStrokes = KeystrokeUtil.toKeyStrokes(readingBuilder.toString(), this.maxExpansions);
         } else {
             keyStrokes = Lists.newArrayList(KeystrokeUtil.toCanonicalKeystroke(readingBuilder.toString()));
         }

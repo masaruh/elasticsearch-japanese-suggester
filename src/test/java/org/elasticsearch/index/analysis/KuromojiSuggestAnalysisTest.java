@@ -91,6 +91,12 @@ public class KuromojiSuggestAnalysisTest {
         testTokenization(createAnalyzer(true, false), "A型", Lists.newArrayList("A型", "Agata"));
     }
 
+    @Test
+    public void testMaxExpansions() throws IOException {
+        testTokenization(createAnalyzer(true, 1, false), "上昇気流", 2); // 2 -> original + max_expansions=1
+        testTokenization(createAnalyzer(true, 5, false), "小学校", 6); // 6 -> original + max_expansions=5
+    }
+
     private List<String> edgeNgram(List<String> inputs) throws IOException {
         Set<String> result = Sets.newLinkedHashSet(); // Deduplicate.
         for (String input : inputs) {
@@ -114,6 +120,13 @@ public class KuromojiSuggestAnalysisTest {
         analyzer.close();
     }
 
+    private void testTokenization(Analyzer analyzer, String input, int expected) throws IOException {
+        TokenStream stream = analyzer.tokenStream("dummy", input);
+        List<String> result = readStream(stream);
+        Assert.assertThat(Sets.newHashSet(result), hasSize(expected));
+        analyzer.close();
+    }
+
     private List<String> readStream(TokenStream stream) throws IOException {
         stream.reset();
 
@@ -126,7 +139,14 @@ public class KuromojiSuggestAnalysisTest {
     }
 
     public Analyzer createAnalyzer(boolean expand, boolean edgeNGram) {
-        String analyzerSetting = settingTemplate.replace("%EXPAND%", "" + expand).replace("%EDGE_NGRAM%", "" + edgeNGram);
+        return createAnalyzer(expand, 512, edgeNGram); // default is 512
+    }
+
+    public Analyzer createAnalyzer(boolean expand, int maxExpansions, boolean edgeNGram) {
+        String analyzerSetting = settingTemplate
+                .replace("%EXPAND%", "" + expand)
+                .replace("%MAX_EXPANSIONS%", "" + maxExpansions)
+                .replace("%EDGE_NGRAM%", "" + edgeNGram);
 
         Settings settings = Settings.settingsBuilder().loadFromSource(analyzerSetting)
                 .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
