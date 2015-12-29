@@ -21,33 +21,69 @@ import static org.hamcrest.Matchers.is;
 
 @LuceneTestCase.SuppressCodecs("*")
 public class JapaneseCompletionSuggesterTest extends ESIntegTestCase {
-    private static final String INDEX = "test_index";
-    private static final String TYPE = "test_type";
-    private static final String FIELD = "suggest";
 
     @Override
     protected Settings nodeSettings(int nodeOrdinal) {
         return Settings.settingsBuilder().put(super.nodeSettings(nodeOrdinal)).put("plugin.types", JapaneseSuggesterPlugin.class.getName()).build();
     }
 
-    @Test
-    public void testJapaneseCompletion() throws Exception {
-        createTestIndex();
-
-        feedDocument("東京");
-        feedDocument("豆腐");
-
-        assertSuggestResult("とう", "東京", "豆腐");
-        assertSuggestResult("tou", "東京", "豆腐");
-        assertSuggestResult("とうf", "豆腐");
-        assertSuggestResult("とうk", "東京");
-        assertSuggestResult("東", "東京");
-        assertSuggestResult("豆", "豆腐");
-        assertSuggestResult("党", null);
+    @Override
+    protected int numberOfShards() {
+        return 1;
     }
 
-    public void createTestIndex() throws IOException {
-        client().admin().indices().prepareCreate(INDEX)
+    @Override
+    protected int numberOfReplicas() {
+        return 0;
+    }
+
+    @Test
+    public void testJapaneseCompletion() throws Exception {
+        String index = "simple_test";
+        String type = "type";
+        String field = "suggest";
+
+        createTestIndex(index, type, field);
+
+        feedDocument(index, type, field, "東京");
+        feedDocument(index, type, field, "豆腐");
+        optimize();
+
+//        assertSuggestResult(index, field, "とう", "東京", "豆腐");
+//        assertSuggestResult(index, field, "tou", "東京", "豆腐");
+//        assertSuggestResult(index, field, "とうf", "豆腐");
+//        assertSuggestResult(index, field, "とうk", "東京");
+//        assertSuggestResult(index, field, "東", "東京");
+//        assertSuggestResult(index, field, "豆", "豆腐");
+        assertSuggestResult(index, field, "党", null);
+    }
+
+    @Test
+    public void testPrefixFiltering() throws IOException {
+        String index = "prefix_test";
+        String type = "type";
+        String field = "suggest";
+
+        createTestIndex(index, type, field);
+
+        feedDocument(index, type, field, "小学校", 1);
+
+        int i = 1;
+        for (; i < 10; i++) {
+            feedDocument(index, type, field, "省エネ" + i, i + 1);
+        }
+        optimize();
+        assertSuggestResult(index, field, "小", 1, "小学校");
+
+        // Add another document.
+        i++;
+        feedDocument(index, type, field, "省エネ" + i, i + 1);
+        // This time it shouldn't return result (JapaneseCompletionSuggester.SIZE_FACTOR = 10).
+        assertSuggestResult(index, field, "小", 1, null);
+    }
+
+    public void createTestIndex(String index, String type, String completionField) throws IOException {
+        client().admin().indices().prepareCreate(index)
                 .setSettings(
                         jsonBuilder()
                             .startObject()
@@ -76,12 +112,12 @@ public class JapaneseCompletionSuggesterTest extends ESIntegTestCase {
                             .endObject())
                 .execute().actionGet();
 
-        client().admin().indices().preparePutMapping(INDEX).setType(TYPE)
+        client().admin().indices().preparePutMapping(index).setType(type)
                 .setSource(
                         jsonBuilder()
                             .startObject()
                                 .startObject("properties")
-                                    .startObject(FIELD)
+                                    .startObject(completionField)
                                         .field("type", "japanese_completion")
                                         .field("analyzer", "kuromoji_suggest_index")
                                         .field("search_analyzer", "kuromoji_suggest_search")
@@ -93,20 +129,32 @@ public class JapaneseCompletionSuggesterTest extends ESIntegTestCase {
         ensureYellow();
     }
 
-    private void feedDocument(String value) throws IOException {
-        client().prepareIndex(INDEX, TYPE)
+    private void feedDocument(String index, String type, String completionField, String value) throws IOException {
+        feedDocument(index, type, completionField, value, 1);
+    }
+
+    private void feedDocument(String index, String type, String completionField, String value, int weight) throws IOException {
+        client().prepareIndex(index, type)
                 .setSource(
                         jsonBuilder()
                                 .startObject()
-                                .field("suggest", value)
+                                    .startObject(completionField)
+                                        .field("input", value)
+                                        .field("output", value)
+                                        .field("weight", weight)
+                                    .endObject()
                                 .endObject())
                 .setRefresh(true).execute().actionGet();
 
     }
 
-    private void assertSuggestResult(String input, String... expected) throws IOException {
-        SuggestResponse response = client().prepareSuggest(INDEX)
-                .addSuggestion(new JapaneseCompletionSuggestionBuilder("suggestion").field(FIELD).text(input))
+    private void assertSuggestResult(String index, String completionField, String input, String... expected) throws IOException {
+        assertSuggestResult(index, completionField, input, 10, expected);
+    }
+
+    private void assertSuggestResult(String index, String completionField, String input, int size, String... expected) throws IOException {
+        SuggestResponse response = client().prepareSuggest(index)
+                .addSuggestion(new JapaneseCompletionSuggestionBuilder("suggestion").field(completionField).text(input).size(size))
                 .execute().actionGet();
 
         Assert.assertThat(response.getSuggest().size(), is(1));
