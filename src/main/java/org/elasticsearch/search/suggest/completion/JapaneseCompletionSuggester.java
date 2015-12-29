@@ -1,7 +1,5 @@
 package org.elasticsearch.search.suggest.completion;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.util.CharsRefBuilder;
 import org.elasticsearch.search.suggest.Suggest;
@@ -55,7 +53,7 @@ public class JapaneseCompletionSuggester extends CompletionSuggester {
 
         List<CompletionSuggestion.Entry.Option> options = innerEntry.getOptions();
 
-        for (CompletionSuggestion.Entry.Option option : filterOptionByPrefix(prefix, options)) {
+        for (CompletionSuggestion.Entry.Option option : options) {
             if (option.getText().string().startsWith(prefix)) {
                 completionSuggestEntry.addOption(option);
             }
@@ -76,14 +74,5 @@ public class JapaneseCompletionSuggester extends CompletionSuggester {
         }
 
         return -1;
-    }
-
-    private Iterable<CompletionSuggestion.Entry.Option> filterOptionByPrefix(final String prefix, List<CompletionSuggestion.Entry.Option> original) {
-        return Iterables.filter(original, new Predicate<CompletionSuggestion.Entry.Option>() {
-            @Override
-            public boolean apply(CompletionSuggestion.Entry.Option option) {
-                return option.getText().toString().startsWith(prefix);
-            }
-        });
     }
 }
