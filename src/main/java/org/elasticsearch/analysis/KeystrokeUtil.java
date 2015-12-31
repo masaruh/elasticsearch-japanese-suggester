@@ -8,25 +8,33 @@ import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 
 /**
  * A utility class that is used to generate key strokes from input string.
  */
 public class KeystrokeUtil {
-    private static final Map<String, List<String>> KEY_STROKE_MAP;
+    private static final Map<String, List<Keystroke>> KEY_STROKE_MAP;
 
     static {
         try (InputStream in = KeystrokeBuilder.class.getClassLoader().getResourceAsStream("KeyStrokeMapping.json")) {
             ObjectMapper mapper = new ObjectMapper();
-            Map<String, List<String>> tmp = mapper.readValue(in, new TypeReference<Map<String, List<String>>>(){});
+            Map<String, List<String>> source = mapper.readValue(in, new TypeReference<Map<String, List<String>>>(){});
 
-            for (Map.Entry<String, List<String>> entry : tmp.entrySet()) {
-                tmp.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
+            Map<String, List<Keystroke>> ksTmp = new HashMap<>();
+            for (Map.Entry<String, List<String>> entry : source.entrySet()) {
+                List<Keystroke> keyStrokes = new ArrayList<>();
+                for (int i = 0; i < entry.getValue().size(); i++) {
+                    keyStrokes.add(new Keystroke(entry.getValue().get(i), i + 1)); // Use index + 1 as weight.
+                }
+                ksTmp.put(entry.getKey(), Collections.unmodifiableList(keyStrokes));
             }
-            KEY_STROKE_MAP = Collections.unmodifiableMap(tmp);
+            KEY_STROKE_MAP = Collections.unmodifiableMap(ksTmp);
 
         } catch (IOException e) {
             throw Throwables.propagate(e);
@@ -63,7 +71,7 @@ public class KeystrokeUtil {
         int pos = 0;
         int len = reading.length();
         while (pos < len) {
-            List<String> keyStrokeFragments = null;
+            List<Keystroke> keyStrokeFragments = null;
 
             if (isKatakana(reading.charAt(pos))) {
                 // Try two characters lookup.
@@ -82,7 +90,7 @@ public class KeystrokeUtil {
 
                     // There are Katakana characters that aren't in KEY_STROKE_MAP.
                     if (keyStrokeFragments == null) {
-                        keyStrokeFragments = Lists.newArrayList(ch);
+                        keyStrokeFragments = Lists.newArrayList(new Keystroke(ch, 1));
                     }
 
                     pos++;
@@ -100,7 +108,7 @@ public class KeystrokeUtil {
                     pos++;
                 }
 
-                keyStrokeFragments = Lists.newArrayList(reading.substring(from, pos));
+                keyStrokeFragments = Lists.newArrayList(new Keystroke(reading.substring(from, pos), 1));
             }
 
             builder.append(keyStrokeFragments);
@@ -114,18 +122,26 @@ public class KeystrokeUtil {
     }
 
     private static class KeystrokeBuilder {
-        private RootNode root;
+        private Node root;
 
-        public void append(List<String> keyStrokes) {
+        public void append(List<Keystroke> keyStrokes) {
             if (this.root == null) {
-                this.root = new RootNode(keyStrokes);
+                this.root = new Node(keyStrokes);
             } else {
                 this.root.append(new Node(keyStrokes));
             }
         }
 
         public List<String> keyStrokes(int maxExpansions) {
-            return this.root.keyStrokes(maxExpansions);
+            List<String> result = new ArrayList<>();
+            PriorityQueue<Keystroke> strokes = this.root.keyStrokes(maxExpansions);
+            Keystroke stroke;
+            while ((stroke = strokes.poll()) != null) {
+                result.add(stroke.getKey());
+            }
+
+            Collections.reverse(result);
+            return result;
         }
 
         public String canonicalKeyStroke() {
@@ -134,10 +150,10 @@ public class KeystrokeUtil {
     }
 
     private static class Node {
-        protected final List<String> keyStrokes;
+        protected final List<Keystroke> keyStrokes;
         protected Node child;
 
-        public Node(List<String> keyStrokes) {
+        public Node(List<Keystroke> keyStrokes) {
             this.keyStrokes = keyStrokes;
         }
 
@@ -149,47 +165,53 @@ public class KeystrokeUtil {
             }
         }
 
-        public List<String> keyStrokes(int maxExpansions) {
+        public PriorityQueue<Keystroke> keyStrokes(int maxExpansions) {
             if (this.child == null) {
-                return this.keyStrokes;
+                return new PriorityQueue<>(this.keyStrokes);
             }
 
-            List<String> result = Lists.newArrayList();
-            for (String tail : this.child.keyStrokes(maxExpansions)) {
-                for (String stroke : this.keyStrokes) {
-                    result.add(stroke + tail);
-                    if (result.size() >= maxExpansions) {
-                        return result;
+            PriorityQueue<Keystroke> result = new PriorityQueue<>();
+            for (Keystroke tail : this.child.keyStrokes(maxExpansions)) {
+                for (Keystroke stroke : this.keyStrokes) {
+                    result.add(new Keystroke(stroke.getKey() + tail.getKey(), stroke.getWeight() + tail.getWeight()));
+                    if (result.size() > maxExpansions) {
+                        result.poll(); // Remove highest weight key stroke.
                     }
                 }
             }
-
             return result;
         }
 
         public String keyStroke() {
             if (this.child == null) {
-                return this.keyStrokes.get(0);
+                return this.keyStrokes.get(0).getKey();
             }
 
-            return this.keyStrokes.get(0) + this.child.keyStroke();
+            return this.keyStrokes.get(0).getKey() + this.child.keyStroke();
         }
     }
 
-    private static class RootNode extends Node {
-        public RootNode(List<String> keyStrokes) {
-            super(keyStrokes);
+    private static class Keystroke implements Comparable<Keystroke> {
+        private final String key;
+        private final Integer weight;
+
+        public Keystroke(String key, Integer weight) {
+            this.key = key;
+            this.weight = weight;
         }
 
+        public String getKey() {
+            return this.key;
+        }
+
+        public Integer getWeight() {
+            return weight;
+        }
+
+        // Descending order.
         @Override
-        public List<String> keyStrokes(int maxExpansions) {
-            // If it doesn't have child, create new list (keyStrokes is original contents of KEY_STROKE_MAP).
-            if (this.child == null) {
-                List<String> result = Lists.newArrayList();
-                result.addAll(this.keyStrokes);
-                return result;
-            }
-            return super.keyStrokes(maxExpansions);
+        public int compareTo(Keystroke other) {
+            return -this.weight.compareTo(other.weight);
         }
     }
 }
