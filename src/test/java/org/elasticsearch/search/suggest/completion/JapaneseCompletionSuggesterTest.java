@@ -5,14 +5,15 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.action.suggest.SuggestResponse;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.plugin.JapaneseSuggesterPlugin;
+import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.suggest.Suggest;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
@@ -20,11 +21,12 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
 @LuceneTestCase.SuppressCodecs("*")
+@ESIntegTestCase.ClusterScope(scope = ESIntegTestCase.Scope.SUITE)
 public class JapaneseCompletionSuggesterTest extends ESIntegTestCase {
 
     @Override
-    protected Settings nodeSettings(int nodeOrdinal) {
-        return Settings.settingsBuilder().put(super.nodeSettings(nodeOrdinal)).put("plugin.types", JapaneseSuggesterPlugin.class.getName()).build();
+    protected Collection<Class<? extends Plugin>> nodePlugins() {
+        return pluginList(JapaneseSuggesterPlugin.class);
     }
 
     @Override
@@ -47,14 +49,14 @@ public class JapaneseCompletionSuggesterTest extends ESIntegTestCase {
 
         feedDocument(index, type, field, "東京");
         feedDocument(index, type, field, "豆腐");
-        optimize();
+        forceMerge();
 
-//        assertSuggestResult(index, field, "とう", "東京", "豆腐");
-//        assertSuggestResult(index, field, "tou", "東京", "豆腐");
-//        assertSuggestResult(index, field, "とうf", "豆腐");
-//        assertSuggestResult(index, field, "とうk", "東京");
-//        assertSuggestResult(index, field, "東", "東京");
-//        assertSuggestResult(index, field, "豆", "豆腐");
+        assertSuggestResult(index, field, "とう", "東京", "豆腐");
+        assertSuggestResult(index, field, "tou", "東京", "豆腐");
+        assertSuggestResult(index, field, "とうf", "豆腐");
+        assertSuggestResult(index, field, "とうk", "東京");
+        assertSuggestResult(index, field, "東", "東京");
+        assertSuggestResult(index, field, "豆", "豆腐");
         assertSuggestResult(index, field, "党", null);
     }
 
@@ -72,7 +74,7 @@ public class JapaneseCompletionSuggesterTest extends ESIntegTestCase {
         for (; i < 10; i++) {
             feedDocument(index, type, field, "省エネ" + i, i + 1);
         }
-        optimize();
+        forceMerge();
         assertSuggestResult(index, field, "小", 1, "小学校");
 
         // Add another document.
