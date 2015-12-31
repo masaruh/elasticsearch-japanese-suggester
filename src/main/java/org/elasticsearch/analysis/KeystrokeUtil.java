@@ -23,8 +23,8 @@ public class KeystrokeUtil {
             ObjectMapper mapper = new ObjectMapper();
             Map<String, List<String>> tmp = mapper.readValue(in, new TypeReference<Map<String, List<String>>>(){});
 
-            for (String key : tmp.keySet()) {
-                tmp.put(key, Collections.unmodifiableList(tmp.get(key)));
+            for (Map.Entry<String, List<String>> entry : tmp.entrySet()) {
+                tmp.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
             }
             KEY_STROKE_MAP = Collections.unmodifiableMap(tmp);
 
@@ -95,6 +95,7 @@ public class KeystrokeUtil {
 
                 // Consume consecutive non-Katakana input.
                 int from = pos;
+                pos++; // Already checked pos < len and isKatakana(reading.charAt(pos))
                 while (pos < len && !isKatakana(reading.charAt(pos))) {
                     pos++;
                 }
