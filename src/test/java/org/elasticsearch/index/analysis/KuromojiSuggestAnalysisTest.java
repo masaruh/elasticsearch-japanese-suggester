@@ -93,8 +93,24 @@ public class KuromojiSuggestAnalysisTest {
 
     @Test
     public void testMaxExpansions() throws IOException {
+        testTokenization(createAnalyzer(true, false), "上昇気流", 25); // without max_expansions
         testTokenization(createAnalyzer(true, 1, false), "上昇気流", 2); // 2 -> original + max_expansions=1
+
+        testTokenization(createAnalyzer(true, false), "小学校", 13); // without max_expansions
         testTokenization(createAnalyzer(true, 5, false), "小学校", 6); // 6 -> original + max_expansions=5
+    }
+
+    @Test
+    public void testExpansionOrder() throws IOException {
+        testTokenization(createAnalyzer(true, false),
+                "ジョジョ",
+                Lists.newArrayList("jojo", "zyojo", "jozyo", "zyozyo", "zixyojo", "jozixyo", "zixyozyo", "zyozixyo", "zixyozixyo", "ジョジョ"),
+                true);
+
+        testTokenization(createAnalyzer(false, false),
+                "ジョジョ",
+                Lists.newArrayList("jojo", "ジョジョ"),
+                true);
     }
 
     private List<String> edgeNgram(List<String> inputs) throws IOException {
@@ -110,12 +126,18 @@ public class KuromojiSuggestAnalysisTest {
     }
 
     private void testTokenization(Analyzer analyzer, String input, List<String> expected) throws IOException {
+        testTokenization(analyzer, input, expected, false);
+    }
+
+    private void testTokenization(Analyzer analyzer, String input, List<String> expected, boolean ordered) throws IOException {
         TokenStream stream = analyzer.tokenStream("dummy", input);
         List<String> result = readStream(stream);
 
-        // Compare two lists in order insensitive manner.
-        Assert.assertThat(Sets.newHashSet(result), hasSize(result.size())); // No duplicates.
-        Assert.assertThat(Sets.newHashSet(result), equalTo(Sets.newHashSet(expected)));
+        if (ordered) {
+            Assert.assertThat(result, equalTo(expected));
+        } else {
+            Assert.assertThat(Sets.newHashSet(result), equalTo(Sets.newHashSet(expected)));
+        }
 
         analyzer.close();
     }
