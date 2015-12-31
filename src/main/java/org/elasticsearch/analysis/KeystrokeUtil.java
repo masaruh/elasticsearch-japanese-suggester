@@ -173,7 +173,7 @@ public class KeystrokeUtil {
             PriorityQueue<Keystroke> result = new PriorityQueue<>();
             for (Keystroke tail : this.child.keyStrokes(maxExpansions)) {
                 for (Keystroke stroke : this.keyStrokes) {
-                    result.add(new Keystroke(stroke.getKey() + tail.getKey(), stroke.getWeight() + tail.getWeight()));
+                    result.add(Keystroke.concatenate(stroke, tail));
                     if (result.size() > maxExpansions) {
                         result.poll(); // Remove highest weight key stroke.
                     }
@@ -193,9 +193,9 @@ public class KeystrokeUtil {
 
     private static class Keystroke implements Comparable<Keystroke> {
         private final String key;
-        private final Integer weight;
+        private final int weight;
 
-        public Keystroke(String key, Integer weight) {
+        public Keystroke(String key, int weight) {
             this.key = key;
             this.weight = weight;
         }
@@ -204,14 +204,18 @@ public class KeystrokeUtil {
             return this.key;
         }
 
-        public Integer getWeight() {
+        public int getWeight() {
             return weight;
         }
 
         // Descending order.
         @Override
         public int compareTo(Keystroke other) {
-            return -this.weight.compareTo(other.weight);
+            return other.weight - this.weight;
+        }
+
+        public static Keystroke concatenate(Keystroke k1, Keystroke k2) {
+            return new Keystroke(k1.getKey() + k2.getKey(), k1.getWeight() + k2.getWeight());
         }
     }
 }
