@@ -44,7 +44,7 @@ curl -XPUT 'http://localhost:9200/suggest_sample/_mapping' -d'
     "properties": {
       "suggest": {
         "type": "japanese_completion",
-        "index_analyzer": "kuromoji_suggest_index",
+        "analyzer": "kuromoji_suggest_index",
         "search_analyzer": "kuromoji_suggest_search",
         "payloads": true
       }
