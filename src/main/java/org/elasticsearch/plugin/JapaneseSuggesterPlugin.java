@@ -1,16 +1,12 @@
 package org.elasticsearch.plugin;
 
 import org.elasticsearch.analysis.KuromojiSuggestTokenizerFactory;
-import org.elasticsearch.common.inject.Module;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.analysis.AnalysisModule;
-import org.elasticsearch.index.mapper.JapaneseCompletionTypeModule;
+import org.elasticsearch.index.mapper.core.CompletionFieldMapper;
+import org.elasticsearch.indices.IndicesModule;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.SearchModule;
 import org.elasticsearch.search.suggest.completion.JapaneseCompletionSuggester;
-
-import java.util.Collection;
-import java.util.Collections;
 
 public class JapaneseSuggesterPlugin extends Plugin {
     @Override
@@ -23,9 +19,8 @@ public class JapaneseSuggesterPlugin extends Plugin {
         return "Suggester for Japanese query completion";
     }
 
-    @Override
-    public Collection<Module> indexModules(Settings indexSettings) {
-        return Collections.<Module>singletonList(new JapaneseCompletionTypeModule());
+    public void onModule(IndicesModule indicesModule) {
+        indicesModule.registerMapper("japanese_completion", new CompletionFieldMapper.TypeParser());
     }
 
     public void onModule(AnalysisModule module) {
