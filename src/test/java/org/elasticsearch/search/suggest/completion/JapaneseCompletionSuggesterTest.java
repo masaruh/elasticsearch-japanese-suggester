@@ -84,6 +84,20 @@ public class JapaneseCompletionSuggesterTest extends ESIntegTestCase {
         assertSuggestResult(index, field, "小", 1, null);
     }
 
+    public void testNormlization() throws IOException {
+        String index = "normalization_test";
+        String type = "type";
+        String field = "suggest";
+
+        createTestIndex(index, type, field);
+
+        feedDocument(index, type, field, "ｶﾞｷﾞｸﾞｹﾞｺﾞ");
+        feedDocument(index, type, field, "ABCDE");
+
+        assertSuggestResult(index, field, "ガ", 1, "ｶﾞｷﾞｸﾞｹﾞｺﾞ");
+        assertSuggestResult(index, field, "a", 1, "ABCDE");
+    }
+
     public void createTestIndex(String index, String type, String completionField) throws IOException {
         client().admin().indices().prepareCreate(index)
                 .setSettings(
@@ -94,9 +108,11 @@ public class JapaneseCompletionSuggesterTest extends ESIntegTestCase {
                                         .startObject("analyzer")
                                             .startObject("kuromoji_suggest_index")
                                                 .field("tokenizer", "kuromoji_suggest_index")
+                                                .array("char_filter", "nfkc_lc")
                                             .endObject()
                                             .startObject("kuromoji_suggest_search")
                                                 .field("tokenizer", "kuromoji_suggest_search")
+                                                .array("char_filter", "nfkc_lc")
                                             .endObject()
                                         .endObject()
                                         .startObject("tokenizer")
@@ -107,6 +123,11 @@ public class JapaneseCompletionSuggesterTest extends ESIntegTestCase {
                                             .startObject("kuromoji_suggest_search")
                                                 .field("type", "kuromoji_suggest")
                                                 .field("expand", false)
+                                            .endObject()
+                                        .endObject()
+                                        .startObject("char_filter")
+                                            .startObject("nfkc_lc")
+                                                .field("type", "unicode_normalize")
                                             .endObject()
                                         .endObject()
                                     .endObject()

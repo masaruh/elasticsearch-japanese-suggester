@@ -3,7 +3,8 @@
     "analysis": {
       "analyzer": {
         "kuromoji_suggest":{
-          "tokenizer":"kuromoji_suggest"
+          "tokenizer":"kuromoji_suggest",
+          "char_filter": ["nfkc_lc"]
         }
       },
 
@@ -13,6 +14,12 @@
           "expand": %EXPAND%,
           "max_expansions": %MAX_EXPANSIONS%,
           "edge_ngram": %EDGE_NGRAM%
+        }
+      },
+
+      "char_filter":{
+        "nfkc_lc": {
+          "type": "unicode_normalize"
         }
       }
     }
