@@ -1,8 +1,8 @@
 package org.elasticsearch.plugin;
 
-import org.elasticsearch.analysis.KuromojiSuggestAnalyzerProvider;
-import org.elasticsearch.analysis.KuromojiSuggestTokenizerFactory;
-import org.elasticsearch.analysis.UnicodeNormalizationCharFilterFactory;
+import org.elasticsearch.index.analysis.KuromojiSuggestAnalyzerProvider;
+import org.elasticsearch.index.analysis.KuromojiSuggestTokenizerFactory;
+import org.elasticsearch.index.analysis.UnicodeNormalizationCharFilterFactory;
 import org.elasticsearch.index.analysis.AnalysisModule;
 import org.elasticsearch.index.mapper.core.CompletionFieldMapper;
 import org.elasticsearch.indices.IndicesModule;

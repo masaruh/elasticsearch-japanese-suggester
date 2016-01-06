@@ -6,7 +6,6 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.ngram.EdgeNGramTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.elasticsearch.analysis.KuromojiSuggestTokenizer;
 import org.junit.Test;
 
 import java.io.IOException;

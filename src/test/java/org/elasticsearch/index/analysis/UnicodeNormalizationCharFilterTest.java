@@ -3,7 +3,6 @@ package org.elasticsearch.index.analysis;
 import org.apache.lucene.analysis.BaseTokenStreamTestCase;
 import org.apache.lucene.analysis.CharFilter;
 import org.apache.lucene.analysis.MockTokenizer;
-import org.elasticsearch.analysis.UnicodeNormalizationCharFilter;
 import org.junit.Test;
 
 import java.io.IOException;

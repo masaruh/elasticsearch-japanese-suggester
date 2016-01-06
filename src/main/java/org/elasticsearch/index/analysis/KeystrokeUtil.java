@@ -1,4 +1,4 @@
-package org.elasticsearch.analysis;
+package org.elasticsearch.index.analysis;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
