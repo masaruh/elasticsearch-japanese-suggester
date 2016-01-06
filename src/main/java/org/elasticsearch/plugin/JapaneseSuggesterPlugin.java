@@ -1,5 +1,6 @@
 package org.elasticsearch.plugin;
 
+import org.elasticsearch.analysis.KuromojiSuggestAnalyzerProvider;
 import org.elasticsearch.analysis.KuromojiSuggestTokenizerFactory;
 import org.elasticsearch.analysis.UnicodeNormalizationCharFilterFactory;
 import org.elasticsearch.index.analysis.AnalysisModule;
@@ -25,6 +26,8 @@ public class JapaneseSuggesterPlugin extends Plugin {
     }
 
     public void onModule(AnalysisModule module) {
+        module.addAnalyzer(KuromojiSuggestAnalyzerProvider.INDEX_ANALYZER, KuromojiSuggestAnalyzerProvider.class);
+        module.addAnalyzer(KuromojiSuggestAnalyzerProvider.SEARCH_ANALYZER, KuromojiSuggestAnalyzerProvider.class);
         module.addTokenizer("kuromoji_suggest", KuromojiSuggestTokenizerFactory.class);
         module.addCharFilter("unicode_normalize", UnicodeNormalizationCharFilterFactory.class);
     }
