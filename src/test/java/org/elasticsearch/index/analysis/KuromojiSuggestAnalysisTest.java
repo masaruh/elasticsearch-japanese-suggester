@@ -88,7 +88,7 @@ public class KuromojiSuggestAnalysisTest {
     public void testKanjiAndAlphaNumeric() throws IOException {
         testTokenization(createAnalyzer(true, false), "2015年", Lists.newArrayList("2015年", "2015nen"));
         testTokenization(createAnalyzer(true, false), "第138回", Lists.newArrayList("第138回", "dai138kai"));
-        testTokenization(createAnalyzer(true, false), "A型", Lists.newArrayList("A型", "Agata"));
+        testTokenization(createAnalyzer(true, false), "A型", Lists.newArrayList("a型", "agata"));
     }
 
     @Test
