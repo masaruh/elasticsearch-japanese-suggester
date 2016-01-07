@@ -30,7 +30,29 @@ In order to install the plugin, run:
 bin/plugin install https://github.com/masaruh/elasticsearch-japanese-suggester/releases/download/0.20.0/elasticsearch-japanese-suggester-0.20.0.zip
 ```
 
-### Example
+## Exampl Usage
+
+### Create index (0.21.1 or above)
+```sh
+curl -XPUT "http://localhost:9200/suggest_sample" -d'
+{
+  "mappings": {
+    "test": {
+      "properties": {
+        "suggest": {
+          "type": "japanese_completion",
+          "analyzer": "kuromoji_suggest_index",
+          "search_analyzer": "kuromoji_suggest_search",
+          "payloads": true
+        }
+      }
+    }
+  }
+}'
+```
+
+### Create index (0.21.0 or below)
+
 Use expand=true for indexing and expand=false for searching.
 ```sh
 curl -XPUT 'http://localhost:9200/suggest_sample/' -d'
@@ -69,7 +91,7 @@ curl -XPUT 'http://localhost:9200/suggest_sample/test/_mapping' -d'
   "properties": {
     "suggest": {
       "type": "japanese_completion",
-      "index_analyzer": "kuromoji_suggest_index",
+      "analyzer": "kuromoji_suggest_index",
       "search_analyzer": "kuromoji_suggest_search",
       "payloads": true
     }
@@ -78,7 +100,7 @@ curl -XPUT 'http://localhost:9200/suggest_sample/test/_mapping' -d'
 '
 ```
 
-Feed document:
+### Feed document
 ```sh
 curl -XPUT 'http://localhost:9200/suggest_sample/test/1' -d'
 {
@@ -86,7 +108,7 @@ curl -XPUT 'http://localhost:9200/suggest_sample/test/1' -d'
 }
 ```
 
-And search:
+### Search
 ```sh
 curl -XPOST 'http://localhost:9200/suggest_sample/_suggest' -d'
 {
