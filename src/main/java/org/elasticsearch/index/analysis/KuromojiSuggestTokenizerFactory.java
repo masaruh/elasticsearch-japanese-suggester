@@ -1,12 +1,10 @@
-package org.elasticsearch.analysis;
+package org.elasticsearch.index.analysis;
 
 import org.apache.lucene.analysis.Tokenizer;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.env.Environment;
 import org.elasticsearch.index.Index;
-import org.elasticsearch.index.analysis.AbstractTokenizerFactory;
 import org.elasticsearch.index.settings.IndexSettingsService;
 
 public class KuromojiSuggestTokenizerFactory extends AbstractTokenizerFactory {
@@ -15,7 +13,7 @@ public class KuromojiSuggestTokenizerFactory extends AbstractTokenizerFactory {
     private final boolean edgeNGram;
 
     @Inject
-    public KuromojiSuggestTokenizerFactory(Index index, IndexSettingsService indexSettingsService, Environment env, @Assisted String name, @Assisted Settings settings) {
+    public KuromojiSuggestTokenizerFactory(Index index, IndexSettingsService indexSettingsService, @Assisted String name, @Assisted Settings settings) {
         super(index, indexSettingsService.getSettings(), name, settings);
 
         this.expand = settings.getAsBoolean("expand", false);

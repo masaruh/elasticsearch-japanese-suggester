@@ -99,41 +99,7 @@ public class JapaneseCompletionSuggesterTest extends ESIntegTestCase {
     }
 
     public void createTestIndex(String index, String type, String completionField) throws IOException {
-        client().admin().indices().prepareCreate(index)
-                .setSettings(
-                        jsonBuilder()
-                            .startObject()
-                                .startObject("index")
-                                    .startObject("analysis")
-                                        .startObject("analyzer")
-                                            .startObject("kuromoji_suggest_index")
-                                                .field("tokenizer", "kuromoji_suggest_index")
-                                                .array("char_filter", "nfkc_lc")
-                                            .endObject()
-                                            .startObject("kuromoji_suggest_search")
-                                                .field("tokenizer", "kuromoji_suggest_search")
-                                                .array("char_filter", "nfkc_lc")
-                                            .endObject()
-                                        .endObject()
-                                        .startObject("tokenizer")
-                                            .startObject("kuromoji_suggest_index")
-                                                .field("type", "kuromoji_suggest")
-                                                .field("expand", true)
-                                            .endObject()
-                                            .startObject("kuromoji_suggest_search")
-                                                .field("type", "kuromoji_suggest")
-                                                .field("expand", false)
-                                            .endObject()
-                                        .endObject()
-                                        .startObject("char_filter")
-                                            .startObject("nfkc_lc")
-                                                .field("type", "unicode_normalize")
-                                            .endObject()
-                                        .endObject()
-                                    .endObject()
-                                .endObject()
-                            .endObject())
-                .execute().actionGet();
+        client().admin().indices().prepareCreate(index).execute().actionGet();
 
         client().admin().indices().preparePutMapping(index).setType(type)
                 .setSource(

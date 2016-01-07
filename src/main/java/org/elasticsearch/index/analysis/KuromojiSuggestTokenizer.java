@@ -1,4 +1,4 @@
-package org.elasticsearch.analysis;
+package org.elasticsearch.index.analysis;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
