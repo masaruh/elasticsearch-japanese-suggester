@@ -1,8 +1,9 @@
 package org.elasticsearch.index.analysis;
 
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 
@@ -22,18 +23,29 @@ public class KeystrokeUtil {
     private static final Map<String, List<Keystroke>> KEY_STROKE_MAP;
 
     static {
-        try (InputStream in = KeystrokeBuilder.class.getClassLoader().getResourceAsStream("KeyStrokeMapping.json")) {
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, List<String>> source = mapper.readValue(in, new TypeReference<Map<String, List<String>>>(){});
+        Map<String, List<Keystroke>> ksTmp = new HashMap<>();
 
-            Map<String, List<Keystroke>> ksTmp = new HashMap<>();
-            for (Map.Entry<String, List<String>> entry : source.entrySet()) {
+        try (InputStream in = KeystrokeBuilder.class.getClassLoader().getResourceAsStream("KeyStrokeMapping.json")) {
+            JsonFactory factory = new JsonFactory();
+            JsonParser parser = factory.createParser(in);
+
+
+            while (parser.nextToken() != JsonToken.END_OBJECT) {
+                String key = parser.getCurrentName();
+
+                parser.nextToken(); // JsonToken.START_ARRAY
+
+                // read array of keystrokes
                 List<Keystroke> keyStrokes = new ArrayList<>();
-                for (int i = 0; i < entry.getValue().size(); i++) {
-                    keyStrokes.add(new Keystroke(entry.getValue().get(i), i + 1)); // Use index + 1 as weight.
+                int weight = 0;
+
+                while (parser.nextToken() != JsonToken.END_ARRAY) {
+                    keyStrokes.add(new Keystroke(parser.getText(), weight + 1));
+                    weight++;
                 }
-                ksTmp.put(entry.getKey(), Collections.unmodifiableList(keyStrokes));
+                ksTmp.put(key, Collections.unmodifiableList(keyStrokes));
             }
+
             KEY_STROKE_MAP = Collections.unmodifiableMap(ksTmp);
 
         } catch (IOException e) {

@@ -21,7 +21,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
 @LuceneTestCase.SuppressCodecs("*")
-@ESIntegTestCase.ClusterScope(scope = ESIntegTestCase.Scope.SUITE)
 public class JapaneseCompletionSuggesterTest extends ESIntegTestCase {
 
     @Override
