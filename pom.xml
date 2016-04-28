@@ -6,13 +6,13 @@
 
     <groupId>org.elasticsearch</groupId>
     <artifactId>elasticsearch-japanese-suggester</artifactId>
-    <version>0.22.1</version>
+    <version>0.22.2</version>
 
 
     <packaging>jar</packaging>
 
     <properties>
-        <elasticsearch.version>2.2.1</elasticsearch.version>
+        <elasticsearch.version>2.2.2</elasticsearch.version>
         <lucene.version>5.4.1</lucene.version>
         <jackson.version>2.6.2</jackson.version>
         <testframework.version>2.3.1</testframework.version>
