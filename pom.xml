@@ -6,7 +6,7 @@
 
     <groupId>org.elasticsearch</groupId>
     <artifactId>elasticsearch-japanese-suggester</artifactId>
-    <version>0.22.0</version>
+    <version>0.22.1</version>
 
 
     <packaging>jar</packaging>
