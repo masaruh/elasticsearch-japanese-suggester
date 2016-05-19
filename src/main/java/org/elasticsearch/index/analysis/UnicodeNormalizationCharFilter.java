@@ -10,8 +10,7 @@ public class UnicodeNormalizationCharFilter extends CharFilter {
     private final Normalizer.Form form;
     private final boolean lowerCase;
 
-    private final StringBuilder normalized = new StringBuilder();
-    private final StringBuilder raw = new StringBuilder();
+    private StringBuilder normalized = new StringBuilder();
 
     private final char[] buffer = new char[1024];
 
@@ -31,12 +30,12 @@ public class UnicodeNormalizationCharFilter extends CharFilter {
 
     @Override
     public int read(char[] cbuf, int off, int len) throws IOException {
-        if (off + len > this.normalized.length()) {
-            readAllAndNormalize();
+        if (this.read && this.position == this.normalized.length()) {
+            return -1;
         }
 
         if (!this.read) {
-            return -1;
+            readAllAndNormalize();
         }
 
         int readLength = Math.min(len, this.normalized.length() - this.position);
@@ -44,34 +43,25 @@ public class UnicodeNormalizationCharFilter extends CharFilter {
         this.normalized.getChars(this.position, this.position + readLength, cbuf, off);
         this.position += readLength;
 
-        // consumed all normalized buffer.
-        if (this.position == this.normalized.length()) {
-            clear();
-        }
-
         return readLength;
     }
 
     @Override
     public void reset() throws IOException {
         super.reset();
-        clear();
-    }
-
-    private void clear() {
         this.position = 0;
-        this.normalized.delete(0, this.normalized.length());
-        this.raw.delete(0, this.raw.length());
         this.read = false;
+        this.normalized = new StringBuilder();
     }
 
     private void readAllAndNormalize() throws IOException {
         int length;
+        StringBuilder raw = new StringBuilder();
         while ((length = this.input.read(this.buffer)) != -1) {
             this.read = true;
-            this.raw.append(this.buffer, 0, length);
+            raw.append(this.buffer, 0, length);
         }
-        String normalized = Normalizer.normalize(this.raw, this.form);
+        String normalized = Normalizer.normalize(raw, this.form);
 
         this.normalized.append(this.lowerCase ? normalized.toLowerCase() : normalized);
     }
