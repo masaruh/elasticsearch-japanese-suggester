@@ -1,7 +1,12 @@
 .DS_Store
+.gradle
 *.class
 *.iml
+*.ipr
+*.iws
+*.log
 /target
 /.idea
 /data
+build
 

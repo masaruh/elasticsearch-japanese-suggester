@@ -4,8 +4,6 @@ package org.elasticsearch.index.analysis;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,11 +27,11 @@ public class KeystrokeUtil {
             JsonFactory factory = new JsonFactory();
             JsonParser parser = factory.createParser(in);
 
+            parser.nextToken(); // Skip JsonToken.START_OBJECT
 
             while (parser.nextToken() != JsonToken.END_OBJECT) {
                 String key = parser.getCurrentName();
-
-                parser.nextToken(); // JsonToken.START_ARRAY
+                parser.nextToken(); // Skip JsonToken.START_ARRAY
 
                 // read array of keystrokes
                 List<Keystroke> keyStrokes = new ArrayList<>();
@@ -49,7 +47,7 @@ public class KeystrokeUtil {
             KEY_STROKE_MAP = Collections.unmodifiableMap(ksTmp);
 
         } catch (IOException e) {
-            throw Throwables.propagate(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -66,8 +64,8 @@ public class KeystrokeUtil {
 
     /**
      * Convert reading to key strokes.
-     * Input reading is expected to be in Katakana produced by {@link org.apache.lucene.analysis.ja.JapaneseTokenizer}.
-     * However, since there are words/characters that {@link org.apache.lucene.analysis.ja.JapaneseTokenizer} can't tokenize,
+     * Input reading is expected to be in Katakana produced by JapaneseTokenizer.
+     * However, since there are words/characters that JapaneseTokenizer can't tokenize,
      * it doesn't have to be in Katakana. (In that case, it's not really "reading", though).
      *
      * @param reading reading "basically" in Katakana.
@@ -102,7 +100,8 @@ public class KeystrokeUtil {
 
                     // There are Katakana characters that aren't in KEY_STROKE_MAP.
                     if (keyStrokeFragments == null) {
-                        keyStrokeFragments = Lists.newArrayList(new Keystroke(ch, 1));
+                        keyStrokeFragments = new ArrayList<>();
+                        keyStrokeFragments.add(new Keystroke(ch, 1));
                     }
 
                     pos++;
@@ -120,7 +119,8 @@ public class KeystrokeUtil {
                     pos++;
                 }
 
-                keyStrokeFragments = Lists.newArrayList(new Keystroke(reading.substring(from, pos), 1));
+                keyStrokeFragments = new ArrayList<>();
+                keyStrokeFragments.add(new Keystroke(reading.substring(from, pos), 1));
             }
 
             builder.append(keyStrokeFragments);

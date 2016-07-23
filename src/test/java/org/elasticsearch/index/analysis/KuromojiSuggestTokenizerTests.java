@@ -1,24 +1,24 @@
 package org.elasticsearch.index.analysis;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.ngram.EdgeNGramTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.junit.Test;
+import org.elasticsearch.test.ESTestCase;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertThat;
 
-public class KuromojiSuggestTokenizerTest {
+public class KuromojiSuggestTokenizerTests extends ESTestCase {
 
-    @Test
     public void testMaxExpansions() throws IOException {
         testTokenization(createTokenizer(true, 512, false), "上昇気流", 25); // without max_expansions
         testTokenization(createTokenizer(true, 1, false), "上昇気流", 2); // 2 -> original + max_expansions=1
@@ -34,14 +34,14 @@ public class KuromojiSuggestTokenizerTest {
     private void testTokenization(Tokenizer tokenizer, String input, int expected) throws IOException {
         tokenizer.setReader(new StringReader(input));
         List<String> result = readStream(tokenizer);
-        assertThat(Sets.newHashSet(result), hasSize(expected));
+        assertThat(new HashSet<>(result), hasSize(expected));
         tokenizer.close();
     }
 
     private List<String> readStream(TokenStream stream) throws IOException {
         stream.reset();
 
-        List<String> result = Lists.newArrayList();
+        List<String> result = new ArrayList<>();
         while (stream.incrementToken()) {
             result.add(stream.getAttribute(CharTermAttribute.class).toString());
         }
@@ -50,7 +50,7 @@ public class KuromojiSuggestTokenizerTest {
     }
 
     private List<String> edgeNgram(List<String> inputs) throws IOException {
-        Set<String> result = Sets.newLinkedHashSet(); // Deduplicate.
+        Set<String> result = new LinkedHashSet<>(); // Deduplicate.
         for (String input : inputs) {
             EdgeNGramTokenizer edgeNGramTokenizer = new EdgeNGramTokenizer(1, Integer.MAX_VALUE);
             edgeNGramTokenizer.setReader(new StringReader(input));
@@ -58,7 +58,7 @@ public class KuromojiSuggestTokenizerTest {
             edgeNGramTokenizer.close();
         }
 
-        return Lists.newArrayList(result);
+        return result.stream().collect(Collectors.toList());
     }
 
 }

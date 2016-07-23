@@ -1,22 +1,20 @@
 package org.elasticsearch.index.analysis;
 
-import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.inject.assistedinject.Assisted;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.index.Index;
-import org.elasticsearch.index.settings.IndexSettingsService;
+import org.elasticsearch.env.Environment;
+import org.elasticsearch.index.IndexSettings;
 
 import java.io.Reader;
 import java.text.Normalizer;
+import java.util.Locale;
 
 public class UnicodeNormalizationCharFilterFactory extends AbstractCharFilterFactory {
     private final Normalizer.Form form;
     private final boolean lowerCase;
-    @Inject
-    public UnicodeNormalizationCharFilterFactory(Index index, IndexSettingsService indexSettingsService,
-                                                 @Assisted String name, @Assisted Settings settings) {
-        super(index, indexSettingsService.getSettings(), name);
-        this.form = Normalizer.Form.valueOf(settings.get("form", "NFKC").toUpperCase());
+
+    public UnicodeNormalizationCharFilterFactory(IndexSettings indexSettings, Environment env, String name, Settings settings) {
+        super(indexSettings, name);
+        this.form = Normalizer.Form.valueOf(settings.get("form", "NFKC").toUpperCase(Locale.getDefault()));
         this.lowerCase = settings.getAsBoolean("lower_case", true);
     }
 

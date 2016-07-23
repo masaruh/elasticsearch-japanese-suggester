@@ -1,0 +1,11 @@
+# Integration tests for Kuromoji suggest analysis components
+#
+---
+"Analyzer":
+    - do:
+        indices.analyze:
+          text:         あいう
+          analyzer:     kuromoji_suggest_index
+    - length: { tokens: 2 }
+    - match:  { tokens.0.token: aiu }
+    - match:  { tokens.1.token: あいう }

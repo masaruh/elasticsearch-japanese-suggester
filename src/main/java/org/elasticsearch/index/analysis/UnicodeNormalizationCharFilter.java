@@ -5,6 +5,7 @@ import org.apache.lucene.analysis.CharFilter;
 import java.io.IOException;
 import java.io.Reader;
 import java.text.Normalizer;
+import java.util.Locale;
 
 public class UnicodeNormalizationCharFilter extends CharFilter {
     private final Normalizer.Form form;
@@ -63,6 +64,6 @@ public class UnicodeNormalizationCharFilter extends CharFilter {
         }
         String normalized = Normalizer.normalize(raw, this.form);
 
-        this.normalized.append(this.lowerCase ? normalized.toLowerCase() : normalized);
+        this.normalized.append(this.lowerCase ? normalized.toLowerCase(Locale.getDefault()) : normalized);
     }
 }
