@@ -1,7 +1,5 @@
 package org.elasticsearch.index.analysis;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.ja.JapaneseTokenizer;
 import org.apache.lucene.analysis.ja.tokenattributes.ReadingAttribute;
@@ -11,13 +9,15 @@ import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionLengthAttribute;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
- * A tokenizer that generates key strokes from input by utilizing {@link org.apache.lucene.analysis.ja.JapaneseTokenizer}.
+ * A tokenizer that generates key strokes from input by utilizing {@link JapaneseTokenizer}.
  */
 public class KuromojiSuggestTokenizer extends Tokenizer {
 
@@ -113,7 +113,8 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
         if (this.expand) {
             keyStrokes = KeystrokeUtil.toKeyStrokes(readingBuilder.toString(), this.maxExpansions);
         } else {
-            keyStrokes = Lists.newArrayList(KeystrokeUtil.toCanonicalKeystroke(readingBuilder.toString()));
+            keyStrokes = new ArrayList<>();
+            keyStrokes.add(KeystrokeUtil.toCanonicalKeystroke(readingBuilder.toString()));
         }
 
         // Add original input as "keystroke"
@@ -137,7 +138,7 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
     }
 
     private Iterator<String> toEdgeNGrams(List<String> keyStrokes) {
-        Set<String> edgeNGrams = Sets.newTreeSet(LENGTH_COMPARATOR);
+        Set<String> edgeNGrams = new TreeSet<>(LENGTH_COMPARATOR);
         for (String keyStroke : keyStrokes) {
             for (int i = 0; i < keyStroke.length(); i++) {
                 edgeNGrams.add(keyStroke.substring(0, i + 1));
