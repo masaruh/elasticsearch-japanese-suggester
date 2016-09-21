@@ -56,6 +56,7 @@ public class KeystrokeUtil {
      * See {@link #toKeyStrokes(String, int)}.
      *
      * @param reading reading "basically" in Katakana.
+     * @return keystroke.
      */
     public static String toCanonicalKeystroke(String reading) {
         KeystrokeBuilder builder = buildKeystrokes(reading);
@@ -69,6 +70,8 @@ public class KeystrokeUtil {
      * it doesn't have to be in Katakana. (In that case, it's not really "reading", though).
      *
      * @param reading reading "basically" in Katakana.
+     * @param maxExpansions maximum number of expansions.
+     * @return keystrokes
      */
     public static List<String> toKeyStrokes(String reading, int maxExpansions) {
         KeystrokeBuilder builder = buildKeystrokes(reading);
