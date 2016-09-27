@@ -26,7 +26,12 @@ public class JapaneseCompletionSuggesterTests extends ESIntegTestCase {
 
     @Override
     protected Collection<Class<? extends Plugin>> nodePlugins() {
-        return pluginList(JapaneseSuggesterPlugin.class);
+        return Arrays.asList(JapaneseSuggesterPlugin.class);
+    }
+
+    @Override
+    protected Collection<Class<? extends Plugin>> transportClientPlugins() {
+        return Arrays.asList(JapaneseSuggesterPlugin.class);
     }
 
     @Override

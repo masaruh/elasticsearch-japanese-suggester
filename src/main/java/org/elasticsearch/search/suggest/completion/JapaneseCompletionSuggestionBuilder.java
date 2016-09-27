@@ -52,12 +52,6 @@ public class JapaneseCompletionSuggestionBuilder extends CompletionSuggestionBui
     }
 
     @Override
-    public JapaneseCompletionSuggestionBuilder payload(List<String> fields) {
-        super.payload(fields);
-        return this;
-    }
-
-    @Override
     public JapaneseCompletionSuggestionBuilder contexts(Map<String, List<? extends ToXContent>> queryContexts) {
         super.contexts(queryContexts);
         return this;

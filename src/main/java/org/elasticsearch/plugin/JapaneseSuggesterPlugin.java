@@ -10,7 +10,8 @@ import org.elasticsearch.index.analysis.UnicodeNormalizationCharFilterFactory;
 import org.elasticsearch.indices.analysis.AnalysisModule;
 import org.elasticsearch.plugins.AnalysisPlugin;
 import org.elasticsearch.plugins.Plugin;
-import org.elasticsearch.search.SearchModule;
+import org.elasticsearch.plugins.SearchPlugin;
+import org.elasticsearch.search.suggest.Suggester;
 import org.elasticsearch.search.suggest.completion.JapaneseCompletionSuggester;
 
 import java.util.HashMap;
@@ -18,7 +19,7 @@ import java.util.Map;
 
 import static java.util.Collections.singletonMap;
 
-public class JapaneseSuggesterPlugin extends Plugin implements AnalysisPlugin {
+public class JapaneseSuggesterPlugin extends Plugin implements AnalysisPlugin, SearchPlugin {
     @Override
     public Map<String, AnalysisModule.AnalysisProvider<CharFilterFactory>> getCharFilters() {
         return singletonMap("unicode_normalize", UnicodeNormalizationCharFilterFactory::new);
@@ -37,7 +38,7 @@ public class JapaneseSuggesterPlugin extends Plugin implements AnalysisPlugin {
         return analyzers;
     }
 
-    public void onModule(SearchModule module) {
-        module.registerSuggester("japanese_completion", JapaneseCompletionSuggester.INSTANCE);
+    public Map<String, Suggester<?>> getSuggesters() {
+        return singletonMap("japanese_completion", JapaneseCompletionSuggester.INSTANCE);
     }
 }
