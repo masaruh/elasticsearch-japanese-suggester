@@ -44,11 +44,40 @@ public class KeystrokeUtil {
                 ksTmp.put(key, Collections.unmodifiableList(keyStrokes));
             }
 
-            KEY_STROKE_MAP = Collections.unmodifiableMap(ksTmp);
+            KEY_STROKE_MAP = Collections.unmodifiableMap(expand(ksTmp));
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static Map<String, List<Keystroke>> expand(Map<String, List<Keystroke>> original) {
+        Map<String, List<Keystroke>> expanded = new HashMap<>();
+
+        for (Map.Entry<String, List<Keystroke>> entry : original.entrySet()) {
+            String key = entry.getKey();
+            List<Keystroke> value = entry.getValue();
+
+            if (entry.getKey().length() == 1) {
+                expanded.put(key, value);
+                continue;
+            }
+
+            KeystrokeBuilder kb = new KeystrokeBuilder();
+            for (int i = 0; i < key.length(); i++) {
+                kb.append(original.get(key.substring(i, i + 1)));
+            }
+
+            List<Keystroke> expandedStrokes = new ArrayList<>(value);
+
+            int weight = expandedStrokes.size();
+            for (String stroke : kb.keyStrokes(Integer.MAX_VALUE)) {
+                expandedStrokes.add(new Keystroke(stroke, ++weight));
+            }
+
+            expanded.put(key, Collections.unmodifiableList(expandedStrokes));
+        }
+        return expanded;
     }
 
     /**
@@ -90,7 +119,8 @@ public class KeystrokeUtil {
                 // Try two characters lookup.
                 // ("キャ", "キュ"..etc)
                 if (pos + 2 <= len) {
-                    keyStrokeFragments = KEY_STROKE_MAP.get(reading.substring(pos, pos + 2));
+                    String chars = reading.substring(pos, pos + 2);
+                    keyStrokeFragments = KEY_STROKE_MAP.get(chars);
                     if (keyStrokeFragments != null) {
                         pos += 2;
                     }
