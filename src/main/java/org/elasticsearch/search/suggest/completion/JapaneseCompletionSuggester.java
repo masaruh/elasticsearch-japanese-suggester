@@ -9,15 +9,9 @@ import org.elasticsearch.search.suggest.Suggester;
 import org.elasticsearch.search.suggest.SuggestionBuilder;
 
 import java.io.IOException;
-import java.util.List;
 
-/**
- * Created by masaru on 7/25/16.
- */
 public class JapaneseCompletionSuggester extends Suggester<JapaneseCompletionSuggestionContext> {
     public static final JapaneseCompletionSuggester INSTANCE = new JapaneseCompletionSuggester();
-
-    private final CompletionSuggester COMPLETION = CompletionSuggester.INSTANCE;
 
     private static final int SIZE_FACTOR = 10;
 
@@ -42,13 +36,13 @@ public class JapaneseCompletionSuggester extends Suggester<JapaneseCompletionSug
             int originalSize = delegate.getSize();
             delegate.setSize(originalSize * SIZE_FACTOR);
 
-            CompletionSuggestion inner = (CompletionSuggestion) COMPLETION.execute(name, delegate, searcher, spare);
+            CompletionSuggestion inner = (CompletionSuggestion) CompletionSuggester.INSTANCE.execute(name, delegate, searcher, spare);
 
             delegate.setSize(originalSize);
             return filteredCompletionSuggestion(inner, prefix, originalSize);
 
         } else {
-            return COMPLETION.execute(name, delegate, searcher, spare);
+            return CompletionSuggester.INSTANCE.execute(name, delegate, searcher, spare);
         }
     }
 
@@ -70,24 +64,18 @@ public class JapaneseCompletionSuggester extends Suggester<JapaneseCompletionSug
                 new CompletionSuggestion.Entry(innerEntry.getText(), innerEntry.getOffset(), innerEntry.getLength());
         completionSuggestion.addTerm(completionSuggestEntry);
 
-        List<CompletionSuggestion.Entry.Option> options = innerEntry.getOptions();
-
-        for (CompletionSuggestion.Entry.Option option : options) {
-            if (option.getText().string().startsWith(prefix)) {
-                completionSuggestEntry.addOption(option);
-            }
-
-            if (completionSuggestEntry.getOptions().size() >= size) {
-                break;
-            }
-        }
+        innerEntry.getOptions()
+                .stream()
+                .filter(op -> op.getText().string().startsWith(prefix))
+                .limit(size)
+                .forEach(completionSuggestEntry::addOption);
 
         return completionSuggestion;
     }
 
     @Override
     public SuggestionBuilder<?> innerFromXContent(QueryParseContext context) throws IOException {
-        return COMPLETION.innerFromXContent(context);
+        return CompletionSuggester.INSTANCE.innerFromXContent(context);
     }
 
     @Override
