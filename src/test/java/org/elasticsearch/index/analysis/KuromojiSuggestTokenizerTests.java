@@ -20,7 +20,7 @@ import static org.hamcrest.Matchers.hasSize;
 public class KuromojiSuggestTokenizerTests extends ESTestCase {
 
     public void testMaxExpansions() throws IOException {
-        testTokenization(createTokenizer(true, 512, false), "上昇気流", 25); // without max_expansions
+        testTokenization(createTokenizer(true, 512, false), "上昇気流", 33); // without max_expansions
         testTokenization(createTokenizer(true, 1, false), "上昇気流", 2); // 2 -> original + max_expansions=1
 
         testTokenization(createTokenizer(true, 512, false), "小学校", 13); // without max_expansions
