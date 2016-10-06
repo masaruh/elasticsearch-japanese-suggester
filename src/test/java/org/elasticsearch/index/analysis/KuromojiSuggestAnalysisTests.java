@@ -58,8 +58,8 @@ public class KuromojiSuggestAnalysisTests extends ESTestCase {
     public void testExpansionOrder() throws IOException {
         testTokenization(getIndexAnalyzer(),
                 "ジョジョ",
-                Arrays.asList("jojo", "jozyo", "zyojo", "jixyojo", "jojixyo", "zyozyo", "jixyozyo", "zyojixyo", "jozixyo", "zixyojo",
-                        "zyozixyo", "jixyojixyo", "zixyozyo", "zixyojixyo", "jixyozixyo", "zixyozixyo", "ジョジョ"),
+                Arrays.asList("jojo", "zyojo", "jozyo", "zyozyo", "jixyojo", "jojixyo", "jozixyo", "jixyozyo", "zyojixyo", "zixyojo",
+                        "zixyozyo", "zyozixyo", "jixyojixyo", "jixyozixyo", "zixyojixyo", "zixyozixyo", "ジョジョ"),
                 true);
 
         testTokenization(getSearchAnalyzer(),
