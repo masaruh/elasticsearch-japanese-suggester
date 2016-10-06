@@ -23,7 +23,7 @@ public class KeystrokeUtil {
     static {
         Map<String, List<Keystroke>> ksTmp = new HashMap<>();
 
-        try (InputStream in = KeystrokeBuilder.class.getClassLoader().getResourceAsStream("KeyStrokeMapping.json")) {
+        try (InputStream in = KeystrokeUtil.class.getClassLoader().getResourceAsStream("KeyStrokeMapping.json")) {
             JsonFactory factory = new JsonFactory();
             JsonParser parser = factory.createParser(in);
 
@@ -63,19 +63,14 @@ public class KeystrokeUtil {
                 continue;
             }
 
-            KeystrokeBuilder kb = new KeystrokeBuilder();
+            PriorityQueue<Keystroke> tmp = new PriorityQueue<>();
             for (int i = 0; i < key.length(); i++) {
-                kb.append(original.get(key.substring(i, i + 1)));
+                tmp = append(tmp, original.get(key.substring(i, i + 1)), 256, value.get(value.size() - 1).getWeight());
             }
 
-            List<Keystroke> expandedStrokes = new ArrayList<>(value);
+            value.addAll(tmp);
 
-            int weight = expandedStrokes.size();
-            for (String stroke : kb.keyStrokes(Integer.MAX_VALUE)) {
-                expandedStrokes.add(new Keystroke(stroke, ++weight));
-            }
-
-            expanded.put(key, Collections.unmodifiableList(expandedStrokes));
+            expanded.put(key, Collections.unmodifiableList(value));
         }
         return expanded;
     }
@@ -88,8 +83,7 @@ public class KeystrokeUtil {
      * @return keystroke.
      */
     public static String toCanonicalKeystroke(String reading) {
-        KeystrokeBuilder builder = buildKeystrokes(reading);
-        return builder.canonicalKeyStroke();
+        return buildKeystrokes(reading, 1).poll().getKey();
     }
 
     /**
@@ -103,12 +97,19 @@ public class KeystrokeUtil {
      * @return keystrokes
      */
     public static List<String> toKeyStrokes(String reading, int maxExpansions) {
-        KeystrokeBuilder builder = buildKeystrokes(reading);
-        return builder.keyStrokes(maxExpansions);
+        List<String> result = new ArrayList<>();
+        PriorityQueue<Keystroke> strokes = buildKeystrokes(reading, maxExpansions);
+        Keystroke stroke;
+        while ((stroke = strokes.poll()) != null) {
+            result.add(stroke.getKey());
+        }
+
+        Collections.reverse(result);
+        return result;
     }
 
-    private static KeystrokeBuilder buildKeystrokes(String reading) {
-        KeystrokeBuilder builder = new KeystrokeBuilder();
+    private static PriorityQueue<Keystroke> buildKeystrokes(String reading, int maxExpansions) {
+        PriorityQueue<Keystroke> keyStrokes = new PriorityQueue<>();
 
         int pos = 0;
         int len = reading.length();
@@ -155,84 +156,52 @@ public class KeystrokeUtil {
                 keyStrokeFragments.add(new Keystroke(reading.substring(from, pos), 1));
             }
 
-            builder.append(keyStrokeFragments);
+            keyStrokes = append(keyStrokes, keyStrokeFragments, maxExpansions);
         }
 
-        return builder;
+        return keyStrokes;
     }
 
     private static boolean isKatakana(char c) {
         return 0x30A0 <= c && c <= 0x30FF;
     }
 
-    private static class KeystrokeBuilder {
-        private Node root;
-
-        public void append(List<Keystroke> keyStrokes) {
-            if (this.root == null) {
-                this.root = new Node(keyStrokes);
-            } else {
-                this.root.append(new Node(keyStrokes));
-            }
-        }
-
-        public List<String> keyStrokes(int maxExpansions) {
-            List<String> result = new ArrayList<>();
-            PriorityQueue<Keystroke> strokes = this.root.keyStrokes(maxExpansions);
-            Keystroke stroke;
-            while ((stroke = strokes.poll()) != null) {
-                result.add(stroke.getKey());
-            }
-
-            Collections.reverse(result);
-            return result;
-        }
-
-        public String canonicalKeyStroke() {
-            return this.root.keyStroke();
-        }
+    private static PriorityQueue<Keystroke> append(PriorityQueue<Keystroke> prefixes, List<Keystroke> suffixes, int maxExpansions) {
+        return append(prefixes, suffixes, maxExpansions, 0);
     }
 
-    private static class Node {
-        protected final List<Keystroke> keyStrokes;
-        protected Node child;
+    private static PriorityQueue<Keystroke> append(
+            PriorityQueue<Keystroke> prefixes, List<Keystroke> suffixes, int maxExpansions, int baseWeight) {
 
-        public Node(List<Keystroke> keyStrokes) {
-            this.keyStrokes = keyStrokes;
+        if (maxExpansions <= 0) {
+            throw new IllegalArgumentException("maxExpansions must be > 0");
         }
 
-        public void append(Node node) {
-            if (this.child == null) {
-                this.child = node;
-            } else {
-                this.child.append(node);
-            }
-        }
+        PriorityQueue<Keystroke> result = new PriorityQueue<>();
 
-        public PriorityQueue<Keystroke> keyStrokes(int maxExpansions) {
-            if (this.child == null) {
-                return new PriorityQueue<>(this.keyStrokes);
-            }
+        if (prefixes.isEmpty()) {
+            result.addAll(suffixes.subList(0, Math.min(suffixes.size(), maxExpansions)));
+        } else {
+            int count = 0;
+            int maxWeight = Integer.MIN_VALUE;
+            for (Keystroke prefix : prefixes) {
+                for (Keystroke suffix : suffixes) {
+                    Keystroke ks = Keystroke.concatenate(prefix, suffix, baseWeight);
 
-            PriorityQueue<Keystroke> result = new PriorityQueue<>();
-            for (Keystroke tail : this.child.keyStrokes(maxExpansions)) {
-                for (Keystroke stroke : this.keyStrokes) {
-                    result.add(Keystroke.concatenate(stroke, tail));
-                    if (result.size() > maxExpansions) {
-                        result.poll(); // Remove highest weight key stroke.
+                    if (count < maxExpansions) {
+                        maxWeight = Math.max(maxWeight, ks.getWeight());
+                        result.add(ks);
+                        count++;
+                    } else if (ks.getWeight() < maxWeight) {
+                        maxWeight = Math.max(maxWeight, ks.getWeight());
+                        result.poll();
+                        result.add(ks);
                     }
                 }
             }
-            return result;
         }
 
-        public String keyStroke() {
-            if (this.child == null) {
-                return this.keyStrokes.get(0).getKey();
-            }
-
-            return this.keyStrokes.get(0).getKey() + this.child.keyStroke();
-        }
+        return result;
     }
 
     private static class Keystroke implements Comparable<Keystroke> {
@@ -258,8 +227,8 @@ public class KeystrokeUtil {
             return other.weight - this.weight;
         }
 
-        public static Keystroke concatenate(Keystroke k1, Keystroke k2) {
-            return new Keystroke(k1.getKey() + k2.getKey(), k1.getWeight() + k2.getWeight());
+        public static Keystroke concatenate(Keystroke k1, Keystroke k2, int extraWeight) {
+            return new Keystroke(k1.getKey() + k2.getKey(), k1.getWeight() + k2.getWeight() + extraWeight);
         }
     }
 }
