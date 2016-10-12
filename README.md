@@ -21,6 +21,7 @@ You need to install a version matching your Elasticsearch version:
 | es-2.2.0        |     0.22.0         |
 | es-2.2.1        |     0.22.1         |
 | es-2.2.2        |     0.22.2         |
+| es-5.0.0-rc1    |     5.0.0-rc1      |
 
 
 ## Prerequisites
