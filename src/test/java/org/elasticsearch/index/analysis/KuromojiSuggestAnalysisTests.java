@@ -3,17 +3,12 @@ package org.elasticsearch.index.analysis;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.elasticsearch.Version;
-import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.env.Environment;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.plugin.JapaneseSuggesterPlugin;
 import org.elasticsearch.test.ESTestCase;
-import org.junit.BeforeClass;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,25 +18,14 @@ import java.util.List;
 import static org.hamcrest.Matchers.equalTo;
 
 public class KuromojiSuggestAnalysisTests extends ESTestCase {
-    private static AnalysisService analysisService;
 
     private static final String INPUT = "シュークリーム";
     // Original + key stroke variations.
     private static final List<String> KEY_STROKES = Arrays.asList(
             "シュークリーム", "syu-kuri-mu", "shu-kuri-mu", "sixyu-kuri-mu", "shixyu-kuri-mu");
 
-    @BeforeClass
-    public static void createAnalysisService() throws IOException {
-        Settings settings = Settings.builder()
-                .put(IndexMetaData.SETTING_VERSION_CREATED, Version.CURRENT)
-                .build();
-        Path home = createTempDir();
-
-        Settings nodeSettings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), home).build();
-        analysisService = createAnalysisService(new Index("test", "_na_"), nodeSettings, settings, new JapaneseSuggesterPlugin());
-    }
-
     public void testSimpleSearchAnalyzer() throws IOException {
+
         testTokenization(getSearchAnalyzer(), INPUT, KEY_STROKES.subList(0, 2));
     }
 
@@ -100,11 +84,15 @@ public class KuromojiSuggestAnalysisTests extends ESTestCase {
         return result;
     }
 
-    private Analyzer getIndexAnalyzer() {
-        return analysisService.analyzer(KuromojiSuggestAnalyzerProvider.INDEX_ANALYZER);
+    private Analyzer getIndexAnalyzer() throws IOException {
+        return getAnalysisService().indexAnalyzers.get(KuromojiSuggestAnalyzerProvider.INDEX_ANALYZER);
     }
 
-    private Analyzer getSearchAnalyzer() {
-        return analysisService.analyzer(KuromojiSuggestAnalyzerProvider.SEARCH_ANALYZER);
+    private Analyzer getSearchAnalyzer() throws IOException {
+        return getAnalysisService().indexAnalyzers.get(KuromojiSuggestAnalyzerProvider.SEARCH_ANALYZER);
+    }
+
+    private TestAnalysis getAnalysisService() throws IOException {
+        return createTestAnalysis(new Index("test", "_na_"), Settings.EMPTY, new JapaneseSuggesterPlugin());
     }
 }
