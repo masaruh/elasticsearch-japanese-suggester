@@ -5,7 +5,7 @@ buildscript {
     }
 
     dependencies {
-        classpath "org.elasticsearch.gradle:build-tools:5.1.1"
+        classpath "org.elasticsearch.gradle:build-tools:5.2.0"
     }
 }
 
@@ -15,7 +15,7 @@ repositories {
 }
 
 group = 'org.elasticsearch.plugin'
-version = '5.1.1'
+version = '5.2.0'
 
 apply plugin: 'java'
 apply plugin: 'elasticsearch.esplugin'
