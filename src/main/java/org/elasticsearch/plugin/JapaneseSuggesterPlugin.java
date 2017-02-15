@@ -38,6 +38,7 @@ public class JapaneseSuggesterPlugin extends Plugin implements AnalysisPlugin, S
         return analyzers;
     }
 
+    @Override
     public Map<String, Suggester<?>> getSuggesters() {
         return singletonMap("japanese_completion", JapaneseCompletionSuggester.INSTANCE);
     }

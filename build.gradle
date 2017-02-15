@@ -5,7 +5,7 @@ buildscript {
     }
 
     dependencies {
-        classpath "org.elasticsearch.gradle:build-tools:5.0.0-rc1"
+        classpath "org.elasticsearch.gradle:build-tools:5.0.0"
     }
 }
 
@@ -15,7 +15,7 @@ repositories {
 }
 
 group = 'org.elasticsearch.plugin'
-version = '5.0.0-rc1-SNAPSHOT'
+version = '5.0.0'
 
 apply plugin: 'java'
 apply plugin: 'elasticsearch.esplugin'
@@ -23,7 +23,7 @@ apply plugin: 'idea'
 
 esplugin {
     name 'elasticsearch-japanese-suggester'
-    description ''
+    description 'Suggester for Japanese'
     classname 'org.elasticsearch.plugin.JapaneseSuggesterPlugin'
 }
 
