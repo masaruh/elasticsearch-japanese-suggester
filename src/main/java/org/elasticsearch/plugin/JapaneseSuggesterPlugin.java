@@ -11,12 +11,13 @@ import org.elasticsearch.indices.analysis.AnalysisModule;
 import org.elasticsearch.plugins.AnalysisPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.plugins.SearchPlugin;
-import org.elasticsearch.search.suggest.Suggester;
-import org.elasticsearch.search.suggest.completion.JapaneseCompletionSuggester;
+import org.elasticsearch.search.suggest.completion.JapaneseCompletionSuggestionBuilder;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
 public class JapaneseSuggesterPlugin extends Plugin implements AnalysisPlugin, SearchPlugin {
@@ -39,7 +40,8 @@ public class JapaneseSuggesterPlugin extends Plugin implements AnalysisPlugin, S
     }
 
     @Override
-    public Map<String, Suggester<?>> getSuggesters() {
-        return singletonMap("japanese_completion", JapaneseCompletionSuggester.INSTANCE);
+    public List<SuggesterSpec<?>> getSuggesters() {
+        return singletonList(new SuggesterSpec<>(JapaneseCompletionSuggestionBuilder.SUGGESTION_NAME,
+                JapaneseCompletionSuggestionBuilder::new, JapaneseCompletionSuggestionBuilder::fromXContent));
     }
 }

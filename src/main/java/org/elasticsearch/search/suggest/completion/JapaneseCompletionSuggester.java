@@ -11,13 +11,10 @@ import org.apache.lucene.search.suggest.document.TopSuggestDocs;
 import org.apache.lucene.search.suggest.document.TopSuggestDocsCollector;
 import org.apache.lucene.util.CharsRefBuilder;
 import org.apache.lucene.util.PriorityQueue;
-import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.index.mapper.CompletionFieldMapper;
-import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.search.suggest.Suggest;
 import org.elasticsearch.search.suggest.Suggester;
-import org.elasticsearch.search.suggest.SuggestionBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -126,7 +123,7 @@ public class JapaneseCompletionSuggester extends Suggester<JapaneseCompletionSug
 
             private List<TopSuggestDocs.SuggestScoreDoc> suggestScoreDocs;
 
-            public SuggestDoc(int doc, CharSequence key, CharSequence context, float score) {
+            SuggestDoc(int doc, CharSequence key, CharSequence context, float score) {
                 super(doc, key, context, score);
             }
 
@@ -150,7 +147,7 @@ public class JapaneseCompletionSuggester extends Suggester<JapaneseCompletionSug
                 }
             }
 
-            public List<CharSequence> getContexts() {
+            List<CharSequence> getContexts() {
                 if (suggestScoreDocs == null) {
                     if (context != null) {
                         return Collections.singletonList(context);
@@ -171,7 +168,7 @@ public class JapaneseCompletionSuggester extends Suggester<JapaneseCompletionSug
         private static final class SuggestDocPriorityQueue
                 extends PriorityQueue<FilteredTopDocumentsCollector.SuggestDoc> {
 
-            public SuggestDocPriorityQueue(int maxSize) {
+            SuggestDocPriorityQueue(int maxSize) {
                 super(maxSize);
             }
 
@@ -278,15 +275,5 @@ public class JapaneseCompletionSuggester extends Suggester<JapaneseCompletionSug
                 return TopSuggestDocs.EMPTY;
             }
         }
-    }
-
-    @Override
-    public SuggestionBuilder<?> innerFromXContent(QueryParseContext context) throws IOException {
-        return CompletionSuggester.INSTANCE.innerFromXContent(context);
-    }
-
-    @Override
-    public SuggestionBuilder<?> read(StreamInput in) throws IOException {
-        return new JapaneseCompletionSuggestionBuilder(in);
     }
 }
