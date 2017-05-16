@@ -204,7 +204,7 @@ public class JapaneseCompletionSuggester extends Suggester<JapaneseCompletionSug
         private final Map<Integer, FilteredTopDocumentsCollector.SuggestDoc> scoreDocMap;
         private String prefix;
 
-        public FilteredTopDocumentsCollector(int num, int terminateCount, String prefix) {
+        FilteredTopDocumentsCollector(int num, int terminateCount, String prefix) {
             super(1); // TODO hack, we don't use the underlying pq, so we allocate a size of 1
             this.num = num;
             this.terminate = terminateCount;
