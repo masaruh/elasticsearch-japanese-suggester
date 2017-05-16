@@ -208,16 +208,16 @@ public class KeystrokeUtil {
         private final String key;
         private final int weight;
 
-        public Keystroke(String key, int weight) {
+        private Keystroke(String key, int weight) {
             this.key = key;
             this.weight = weight;
         }
 
-        public String getKey() {
+        private String getKey() {
             return this.key;
         }
 
-        public int getWeight() {
+        private int getWeight() {
             return weight;
         }
 
@@ -227,7 +227,7 @@ public class KeystrokeUtil {
             return other.weight - this.weight;
         }
 
-        public static Keystroke concatenate(Keystroke k1, Keystroke k2, int extraWeight) {
+        private static Keystroke concatenate(Keystroke k1, Keystroke k2, int extraWeight) {
             return new Keystroke(k1.getKey() + k2.getKey(), k1.getWeight() + k2.getWeight() + extraWeight);
         }
     }
