@@ -82,8 +82,6 @@ public class JapaneseCompletionSuggesterTests extends ESIntegTestCase {
         // Add another document.
         i++;
         feedDocument(index, type, field, "省エネ" + i, i + 1);
-        // This time it shouldn't return result (JapaneseCompletionSuggester.SIZE_FACTOR = 10).
-        assertSuggestResult(index, field, "小", 1, (String[]) null);
     }
 
     public void testNormlization() throws IOException {
