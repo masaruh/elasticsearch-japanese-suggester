@@ -9,10 +9,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A utility class that is used to generate key strokes from input string.
@@ -21,8 +31,17 @@ public class KeystrokeUtil {
     private static final Map<String, List<Keystroke>> KEY_STROKE_MAP;
 
     static {
-        Map<String, List<Keystroke>> ksTmp = new HashMap<>();
+        Map<String, List<Keystroke>> parsed = parseMapping();
 
+        KEY_STROKE_MAP = parsed.entrySet().stream()
+                .map(expandMultiChar(parsed))
+                .collect(Collectors.collectingAndThen(
+                                Collectors.toMap(Map.Entry::getKey, entry -> Collections.unmodifiableList(entry.getValue())),
+                                Collections::unmodifiableMap));
+    }
+
+    private static Map<String, List<Keystroke>> parseMapping() {
+        Map<String, List<Keystroke>> ksTmp = new HashMap<>();
         try (InputStream in = KeystrokeUtil.class.getClassLoader().getResourceAsStream("KeyStrokeMapping.json")) {
             JsonFactory factory = new JsonFactory();
             JsonParser parser = factory.createParser(in);
@@ -43,36 +62,34 @@ public class KeystrokeUtil {
                 }
                 ksTmp.put(key, keyStrokes);
             }
-
-            KEY_STROKE_MAP = Collections.unmodifiableMap(expandMultiChar(ksTmp));
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return ksTmp;
     }
 
-    private static Map<String, List<Keystroke>> expandMultiChar(Map<String, List<Keystroke>> original) {
-        Map<String, List<Keystroke>> expanded = new HashMap<>();
+    private static Function<Map.Entry<String, List<Keystroke>>, Map.Entry<String, List<Keystroke>>> expandMultiChar(
+            Map<String, List<Keystroke>> mapping) {
 
-        for (Map.Entry<String, List<Keystroke>> entry : original.entrySet()) {
+        return (Map.Entry<String, List<Keystroke>> entry) -> {
             String key = entry.getKey();
             List<Keystroke> value = entry.getValue();
 
-            if (entry.getKey().length() == 1) {
-                expanded.put(key, Collections.unmodifiableList(value));
-                continue;
+            if (entry.getKey().length() > 1) {
+                PriorityQueue<Keystroke> tmp = new PriorityQueue<>();
+                for (int i = 0; i < key.length(); i++) {
+                    tmp = append(tmp, mapping.get(key.substring(i, i + 1)), 256, value.get(value.size() - 1).getWeight() - 1);
+                }
+
+                entry.setValue(
+                        Stream.concat(value.stream(), tmp.stream())
+                                .sorted(Comparator.reverseOrder())
+                                .map(ks -> new Keystroke(ks.key, ks.weight)) // "squash" history
+                                .collect(Collectors.toList()));
             }
 
-            PriorityQueue<Keystroke> tmp = new PriorityQueue<>();
-            for (int i = 0; i < key.length(); i++) {
-                tmp = append(tmp, original.get(key.substring(i, i + 1)), 256, value.get(value.size() - 1).getWeight());
-            }
-
-            value.addAll(tmp);
-
-            expanded.put(key, Collections.unmodifiableList(value));
-        }
-        return expanded;
+            return entry;
+        };
     }
 
     /**
@@ -97,15 +114,9 @@ public class KeystrokeUtil {
      * @return keystrokes
      */
     public static List<String> toKeyStrokes(String reading, int maxExpansions) {
-        List<String> result = new ArrayList<>();
-        PriorityQueue<Keystroke> strokes = buildKeystrokes(reading, maxExpansions);
-        Keystroke stroke;
-        while ((stroke = strokes.poll()) != null) {
-            result.add(stroke.getKey());
-        }
-
-        Collections.reverse(result);
-        return result;
+        return buildKeystrokes(reading, maxExpansions).stream()
+                .sorted(Comparator.reverseOrder())
+                .map(Keystroke::getKey).collect(Collectors.toList());
     }
 
     private static PriorityQueue<Keystroke> buildKeystrokes(String reading, int maxExpansions) {
@@ -133,8 +144,7 @@ public class KeystrokeUtil {
 
                     // There are Katakana characters that aren't in KEY_STROKE_MAP.
                     if (keyStrokeFragments == null) {
-                        keyStrokeFragments = new ArrayList<>();
-                        keyStrokeFragments.add(new Keystroke(ch, 1));
+                        keyStrokeFragments = Collections.singletonList(new Keystroke(ch, 1));
                     }
 
                     pos++;
@@ -152,8 +162,7 @@ public class KeystrokeUtil {
                     pos++;
                 }
 
-                keyStrokeFragments = new ArrayList<>();
-                keyStrokeFragments.add(new Keystroke(reading.substring(from, pos), 1));
+                keyStrokeFragments = Collections.singletonList(new Keystroke(reading.substring(from, pos), 1));
             }
 
             keyStrokes = append(keyStrokes, keyStrokeFragments, maxExpansions);
@@ -170,6 +179,14 @@ public class KeystrokeUtil {
         return append(prefixes, suffixes, maxExpansions, 0);
     }
 
+    /**
+     * Concatenate prefixes and suffixes.
+     * @param prefixes prefixes.
+     * @param suffixes list of suffixes. Expected to be sorted in ascending order.
+     * @param maxExpansions max expansions.
+     * @param baseWeight baseWeight.
+     * @return priority queue that has combination of prefix and suffix.
+     */
     private static PriorityQueue<Keystroke> append(
             PriorityQueue<Keystroke> prefixes, List<Keystroke> suffixes, int maxExpansions, int baseWeight) {
 
@@ -177,40 +194,36 @@ public class KeystrokeUtil {
             throw new IllegalArgumentException("maxExpansions must be > 0");
         }
 
-        PriorityQueue<Keystroke> result = new PriorityQueue<>();
-
         if (prefixes.isEmpty()) {
-            result.addAll(suffixes.subList(0, Math.min(suffixes.size(), maxExpansions)));
-        } else {
-            int count = 0;
-            int maxWeight = Integer.MIN_VALUE;
-            for (Keystroke prefix : prefixes) {
-                for (Keystroke suffix : suffixes) {
-                    Keystroke ks = Keystroke.concatenate(prefix, suffix, baseWeight);
-
-                    if (count < maxExpansions) {
-                        maxWeight = Math.max(maxWeight, ks.getWeight());
-                        result.add(ks);
-                        count++;
-                    } else if (ks.getWeight() < maxWeight) {
-                        maxWeight = Math.max(maxWeight, ks.getWeight());
-                        result.poll();
-                        result.add(ks);
-                    }
-                }
-            }
+            return suffixes.stream()
+                    .limit(maxExpansions)
+                    .collect(Collectors.toCollection(PriorityQueue::new));
         }
 
-        return result;
+        return prefixes.stream()
+                .flatMap(pfx -> suffixes.stream()
+                        .map(sfx -> Keystroke.concatenate(pfx, sfx, baseWeight)))
+                .collect(new KeystrokeCollector(maxExpansions));
+
     }
 
     private static class Keystroke implements Comparable<Keystroke> {
         private final String key;
         private final int weight;
+        private final List<Integer> weightHistory;
 
         private Keystroke(String key, int weight) {
             this.key = key;
             this.weight = weight;
+            this.weightHistory = Collections.singletonList(weight);
+        }
+
+        private Keystroke(String key, int weight, List<Integer> history) {
+            this.key = key;
+            this.weight = weight;
+            List<Integer> tmp = new ArrayList<>(history);
+            tmp.add(weight);
+            this.weightHistory = Collections.unmodifiableList(tmp);
         }
 
         private String getKey() {
@@ -221,14 +234,79 @@ public class KeystrokeUtil {
             return weight;
         }
 
-        // Descending order.
+        // Order by:
+        // 1. weight descending
+        // 2. prefix (weight excluding the last keystroke) weight descending
+        // 3. key descending
         @Override
         public int compareTo(Keystroke other) {
-            return other.weight - this.weight;
+            int result = other.weight - this.weight;
+            if (result != 0) {
+                return result;
+            }
+
+            for (int i = 0; i < other.weightHistory.size(); i++) {
+                result = other.weightHistory.get(i) - this.weightHistory.get(i);
+                if (result != 0) {
+                    return result;
+                }
+            }
+            return other.key.compareTo(this.key);
         }
 
         private static Keystroke concatenate(Keystroke k1, Keystroke k2, int extraWeight) {
-            return new Keystroke(k1.getKey() + k2.getKey(), k1.getWeight() + k2.getWeight() + extraWeight);
+            return new Keystroke(k1.getKey() + k2.getKey(), k1.getWeight() + k2.getWeight() + extraWeight, k1.weightHistory);
+        }
+
+        @Override
+        public String toString() {
+            return key + " (" + weightHistory.stream().map(Object::toString).collect(Collectors.joining(",")) + " - " + weight + ")";
+        }
+    }
+
+    private static class KeystrokeCollector implements Collector<Keystroke, PriorityQueue<Keystroke>, PriorityQueue<Keystroke>> {
+        private final int maxExpansions;
+
+        KeystrokeCollector(int maxExpansions) {
+            this.maxExpansions = maxExpansions;
+        }
+
+        @Override
+        public Supplier<PriorityQueue<Keystroke>> supplier() {
+            return PriorityQueue::new;
+        }
+
+        @Override
+        public BiConsumer<PriorityQueue<Keystroke>, Keystroke> accumulator() {
+            return this::add;
+        }
+
+        @Override
+        public BinaryOperator<PriorityQueue<Keystroke>> combiner() {
+            return (q1, q2) -> {
+                q2.forEach(ks -> add(q1, ks));
+                return q1;
+            };
+        }
+
+        @Override
+        public Function<PriorityQueue<Keystroke>, PriorityQueue<Keystroke>> finisher() {
+            return Function.identity();
+        }
+
+        // Small hack to skip adding and removing.
+        private void add(PriorityQueue<Keystroke> q, Keystroke ks) {
+            if (q.size() < maxExpansions) {
+                q.add(ks);
+            } else if (ks.compareTo(q.peek()) > 0) {
+                q.poll();
+                q.add(ks);
+            }
+        }
+
+        @Override
+        public Set<Characteristics> characteristics() {
+            return EnumSet.of(Characteristics.UNORDERED, Characteristics.IDENTITY_FINISH);
         }
     }
 }
