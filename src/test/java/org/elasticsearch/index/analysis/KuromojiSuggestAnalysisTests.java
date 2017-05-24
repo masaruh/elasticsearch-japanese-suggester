@@ -19,14 +19,23 @@ import static org.hamcrest.Matchers.equalTo;
 
 public class KuromojiSuggestAnalysisTests extends ESTestCase {
 
-    private static final String INPUT = "シュークリーム";
-    // Original + key stroke variations.
-    private static final List<String> KEY_STROKES = Arrays.asList(
-            "シュークリーム", "syu-kuri-mu", "shu-kuri-mu", "sixyu-kuri-mu", "shixyu-kuri-mu");
+    public void testSimpleIndexAnalyzer() throws IOException {
+        testTokenization(getIndexAnalyzer(),
+                "シュークリーム",
+                Arrays.asList("syu-kuri-mu", "shu-kuri-mu", "sixyu-kuri-mu", "shixyu-kuri-mu", "シュークリーム"),
+                true);
+
+        testTokenization(getIndexAnalyzer(),
+                "ハッピー",
+                Arrays.asList("happi-", "haxtupi-", "haxtsupi-", "ハッピー"),
+                true);
+    }
 
     public void testSimpleSearchAnalyzer() throws IOException {
-
-        testTokenization(getSearchAnalyzer(), INPUT, KEY_STROKES.subList(0, 2));
+        testTokenization(
+                getSearchAnalyzer(),
+                "シュークリーム",
+                Arrays.asList("syu-kuri-mu", "シュークリーム"));
     }
 
     public void testDedupInput() throws IOException {
@@ -42,8 +51,8 @@ public class KuromojiSuggestAnalysisTests extends ESTestCase {
     public void testExpansionOrder() throws IOException {
         testTokenization(getIndexAnalyzer(),
                 "ジョジョ",
-                Arrays.asList("jojo", "jozyo", "zyojo", "jojixyo", "zyozyo", "jixyojo", "jozixyo", "zyojixyo",
-                        "jixyozyo", "zixyojo", "zyozixyo", "jixyojixyo", "zixyozyo", "jixyozixyo", "zixyojixyo", "zixyozixyo", "ジョジョ"),
+                Arrays.asList("jojo", "jozyo", "zyojo", "zyozyo", "jojixyo", "jixyojo", "jozixyo", "zyojixyo", "jixyozyo",
+                        "zixyojo", "zyozixyo", "zixyozyo", "jixyojixyo", "jixyozixyo", "zixyojixyo", "zixyozixyo", "ジョジョ"),
                 true);
 
         testTokenization(getSearchAnalyzer(),

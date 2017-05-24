@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonToken;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -22,7 +23,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * A utility class that is used to generate key strokes from input string.
@@ -33,11 +33,17 @@ public class KeystrokeUtil {
     static {
         Map<String, List<Keystroke>> parsed = parseMapping();
 
-        KEY_STROKE_MAP = parsed.entrySet().stream()
-                .map(expandMultiChar(parsed))
-                .collect(Collectors.collectingAndThen(
-                                Collectors.toMap(Map.Entry::getKey, entry -> Collections.unmodifiableList(entry.getValue())),
-                                Collections::unmodifiableMap));
+        // Expand 2 char entries and then 3 char entries
+        for (int i = 2; i <= 3; i++) {
+            int len = i;
+            parsed.putAll(
+                    parsed.entrySet().stream()
+                            .filter(entry -> entry.getKey().length() == len)
+                            .map(expandEntry(parsed))
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+        }
+
+        KEY_STROKE_MAP = Collections.unmodifiableMap(parsed);
     }
 
     private static Map<String, List<Keystroke>> parseMapping() {
@@ -68,28 +74,36 @@ public class KeystrokeUtil {
         return ksTmp;
     }
 
-    private static Function<Map.Entry<String, List<Keystroke>>, Map.Entry<String, List<Keystroke>>> expandMultiChar(
-            Map<String, List<Keystroke>> mapping) {
+    private static Function<Map.Entry<String, List<Keystroke>>, Map.Entry<String, List<Keystroke>>> expandEntry(
+            Map<String, List<Keystroke>> lookup) {
 
-        return (Map.Entry<String, List<Keystroke>> entry) -> {
+        return entry -> {
             String key = entry.getKey();
-            List<Keystroke> value = entry.getValue();
-
-            if (entry.getKey().length() > 1) {
-                PriorityQueue<Keystroke> tmp = new PriorityQueue<>();
-                for (int i = 0; i < key.length(); i++) {
-                    tmp = append(tmp, mapping.get(key.substring(i, i + 1)), 256, value.get(value.size() - 1).getWeight() - 1);
-                }
-
-                entry.setValue(
-                        Stream.concat(value.stream(), tmp.stream())
-                                .sorted(Comparator.reverseOrder())
-                                .map(ks -> new Keystroke(ks.key, ks.weight)) // "squash" history
-                                .collect(Collectors.toList()));
-            }
-
-            return entry;
+            List<Keystroke> original = entry.getValue();
+            List<Keystroke> keystrokes = new ArrayList<>(original);
+            keystrokes.addAll(expand(key, lookup, key.length() - 1, original.get(original.size() -1).getWeight()));
+            return new AbstractMap.SimpleEntry<>(key, Collections.unmodifiableList(keystrokes));
         };
+    }
+
+    private static List<Keystroke> expand(String key, Map<String, List<Keystroke>> reference, int maxCharLength, int baseWeight) {
+        if (key.length() <= maxCharLength) {
+            return reference.get(key);
+        }
+
+        PriorityQueue<Keystroke> expanded = new PriorityQueue<>();
+        for (int i = 1; i <= maxCharLength; i++) {
+            List<Keystroke> left = expand(key.substring(0, i), reference, maxCharLength, 0);
+            List<Keystroke> right = expand(key.substring(i), reference, maxCharLength, 0);
+            if (left == null || right == null) {
+                continue;
+            }
+            expanded.addAll(append(new PriorityQueue<>(left), right, 256, baseWeight));
+        }
+        return expanded.stream()
+                .sorted(Comparator.reverseOrder())
+                .map(ks -> new Keystroke(ks.key, ks.weight)) // "squash" history
+                .collect(Collectors.toList());
     }
 
     /**
@@ -128,25 +142,19 @@ public class KeystrokeUtil {
             List<Keystroke> keyStrokeFragments = null;
 
             if (isKatakana(reading.charAt(pos))) {
-                // Try two characters lookup.
+                // Try multi characters lookup.
                 // ("キャ", "キュ"..etc)
-                if (pos + 2 <= len) {
-                    keyStrokeFragments = KEY_STROKE_MAP.get(reading.substring(pos, pos + 2));
+
+                for (int i = 3; i > 0; i--) {
+                    keyStrokeFragments = lookup(reading, pos, i);
                     if (keyStrokeFragments != null) {
-                        pos += 2;
+                        pos += i;
+                        break;
                     }
                 }
-
-                // If not found, single character lookup.
+                // There are Katakana characters that aren't in KEY_STROKE_MAP.
                 if (keyStrokeFragments == null) {
-                    String ch = reading.substring(pos, pos + 1);
-                    keyStrokeFragments = KEY_STROKE_MAP.get(ch);
-
-                    // There are Katakana characters that aren't in KEY_STROKE_MAP.
-                    if (keyStrokeFragments == null) {
-                        keyStrokeFragments = Collections.singletonList(new Keystroke(ch, 1));
-                    }
-
+                    keyStrokeFragments = Collections.singletonList(new Keystroke(reading.substring(pos, pos + 1), 1));
                     pos++;
                 }
             } else {
@@ -162,13 +170,20 @@ public class KeystrokeUtil {
                     pos++;
                 }
 
-                keyStrokeFragments = Collections.singletonList(new Keystroke(reading.substring(from, pos), 1));
+                keyStrokeFragments = Collections.singletonList(new Keystroke(reading.substring(from, pos), pos - from));
             }
 
             keyStrokes = append(keyStrokes, keyStrokeFragments, maxExpansions);
         }
 
         return keyStrokes;
+    }
+
+    private static List<Keystroke> lookup(String reading, int pos, int len) {
+        if (pos + len > reading.length()) {
+            return null;
+        }
+        return KEY_STROKE_MAP.get(reading.substring(pos, pos + len));
     }
 
     private static boolean isKatakana(char c) {
@@ -245,7 +260,7 @@ public class KeystrokeUtil {
                 return result;
             }
 
-            for (int i = 0; i < other.weightHistory.size(); i++) {
+            for (int i = 0; i < Math.min(this.weightHistory.size(), other.weightHistory.size()); i++) {
                 result = other.weightHistory.get(i) - this.weightHistory.get(i);
                 if (result != 0) {
                     return result;
