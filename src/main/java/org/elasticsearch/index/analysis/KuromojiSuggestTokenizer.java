@@ -127,7 +127,7 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
             keyStrokes.add(surfaceFormAsKeystroke);
         }
 
-        this.keystrokes = this.edgeNGram ? toEdgeNGrams(keyStrokes) : keyStrokes.iterator();
+        this.keystrokes = this.edgeNGram ? KeystrokeUtil.toEdgeNGrams(keyStrokes).iterator() : keyStrokes.iterator();
         this.first = true;
     }
 
@@ -140,17 +140,6 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
         }
     }
 
-    private Iterator<Keystroke> toEdgeNGrams(List<Keystroke> keyStrokes) {
-//        Set<String> edgeNGrams = new TreeSet<>(LENGTH_COMPARATOR);
-//        for (String keyStroke : keyStrokes) {
-//            for (int i = 0; i < keyStroke.length(); i++) {
-//                edgeNGrams.add(keyStroke.substring(0, i + 1));
-//            }
-//        }
-//
-//        return edgeNGrams.iterator();
-        return null;
-    }
 
     @Override
     public void end() throws IOException {
