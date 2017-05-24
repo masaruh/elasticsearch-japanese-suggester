@@ -113,8 +113,8 @@ public class KeystrokeUtil {
      * @param reading reading "basically" in Katakana.
      * @return keystroke.
      */
-    public static String toCanonicalKeystroke(String reading) {
-        return buildKeystrokes(reading, 1).poll().getKey();
+    public static Keystroke toCanonicalKeystroke(String reading) {
+        return buildKeystrokes(reading, 1).poll();
     }
 
     /**
@@ -127,10 +127,10 @@ public class KeystrokeUtil {
      * @param maxExpansions maximum number of expansions.
      * @return keystrokes
      */
-    public static List<String> toKeyStrokes(String reading, int maxExpansions) {
+    public static List<Keystroke> toKeyStrokes(String reading, int maxExpansions) {
         return buildKeystrokes(reading, maxExpansions).stream()
                 .sorted(Comparator.reverseOrder())
-                .map(Keystroke::getKey).collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     private static PriorityQueue<Keystroke> buildKeystrokes(String reading, int maxExpansions) {
@@ -222,12 +222,12 @@ public class KeystrokeUtil {
 
     }
 
-    private static class Keystroke implements Comparable<Keystroke> {
+    static class Keystroke implements Comparable<Keystroke> {
         private final String key;
         private final int weight;
         private final List<Integer> weightHistory;
 
-        private Keystroke(String key, int weight) {
+        Keystroke(String key, int weight) {
             this.key = key;
             this.weight = weight;
             this.weightHistory = Collections.singletonList(weight);
@@ -241,12 +241,16 @@ public class KeystrokeUtil {
             this.weightHistory = Collections.unmodifiableList(tmp);
         }
 
-        private String getKey() {
+        String getKey() {
             return this.key;
         }
 
-        private int getWeight() {
+        int getWeight() {
             return weight;
+        }
+
+        List<Integer> getWeightHistory() {
+            return weightHistory;
         }
 
         // Order by:

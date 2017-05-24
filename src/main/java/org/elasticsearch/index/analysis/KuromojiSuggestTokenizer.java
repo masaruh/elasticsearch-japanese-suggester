@@ -13,8 +13,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * A tokenizer that generates key strokes from input by utilizing {@link JapaneseTokenizer}.
@@ -38,6 +36,7 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
     private final OffsetAttribute offsetAtt = addAttribute(OffsetAttribute.class);
     private final PositionIncrementAttribute posIncAtt = addAttribute(PositionIncrementAttribute.class);
     private final PositionLengthAttribute posLengthAtt = addAttribute(PositionLengthAttribute.class);
+    private final WeightAttribute weightAtt = addAttribute(WeightAttribute.class);
 
     private final JapaneseTokenizer kuromoji;
 
@@ -45,7 +44,7 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
     private final int maxExpansions;
     private final boolean edgeNGram;
 
-    private Iterator<String> terms;
+    private Iterator<KeystrokeUtil.Keystroke> keystrokes;
     private boolean first = true; // First token or not.
 
     public KuromojiSuggestTokenizer(boolean expand, int maxExpansions, boolean edgeNGram) {
@@ -58,15 +57,18 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
 
     @Override
     public final boolean incrementToken() throws IOException {
-        if (!this.terms.hasNext()) {
+        if (!this.keystrokes.hasNext()) {
             return false;
         }
 
         clearAttributes();
 
-        String term = this.terms.next();
-        this.termAtt.append(term);
-        this.offsetAtt.setOffset(0, term.length());
+        KeystrokeUtil.Keystroke keystroke = this.keystrokes.next();
+        String stroke = keystroke.getKey();
+        this.termAtt.append(stroke);
+        this.offsetAtt.setOffset(0, stroke.length());
+        this.weightAtt.setWeight(keystroke.getWeight());
+        this.weightAtt.setWeights(keystroke.getWeightHistory());
 
         if (this.first) {
             this.posIncAtt.setPositionIncrement(1);
@@ -109,7 +111,7 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
         // It may contain Hiragana. Convert it to Katakana.
         hiraganaToKatakana(readingBuilder);
 
-        List<String> keyStrokes;
+        List<KeystrokeUtil.Keystroke> keyStrokes;
         if (this.expand) {
             keyStrokes = KeystrokeUtil.toKeyStrokes(readingBuilder.toString(), this.maxExpansions);
         } else {
@@ -119,12 +121,13 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
 
         // Add original input as "keystroke"
         // Kuromoji doesn't always produce correct reading. So, we use original input for matching too.
-        String surfaceForm = surfaceFormBuilder.toString();
+        String surfaceFormString = surfaceFormBuilder.toString();
+        KeystrokeUtil.Keystroke surfaceForm = new KeystrokeUtil.Keystroke(surfaceFormString, surfaceFormString.length());
         if (!keyStrokes.contains(surfaceForm)) {
             keyStrokes.add(surfaceForm);
         }
 
-        this.terms = this.edgeNGram ? toEdgeNGrams(keyStrokes) : keyStrokes.iterator();
+        this.keystrokes = this.edgeNGram ? toEdgeNGrams(keyStrokes) : keyStrokes.iterator();
         this.first = true;
     }
 
@@ -137,15 +140,16 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
         }
     }
 
-    private Iterator<String> toEdgeNGrams(List<String> keyStrokes) {
-        Set<String> edgeNGrams = new TreeSet<>(LENGTH_COMPARATOR);
-        for (String keyStroke : keyStrokes) {
-            for (int i = 0; i < keyStroke.length(); i++) {
-                edgeNGrams.add(keyStroke.substring(0, i + 1));
-            }
-        }
-
-        return edgeNGrams.iterator();
+    private Iterator<KeystrokeUtil.Keystroke> toEdgeNGrams(List<KeystrokeUtil.Keystroke> keyStrokes) {
+//        Set<String> edgeNGrams = new TreeSet<>(LENGTH_COMPARATOR);
+//        for (String keyStroke : keyStrokes) {
+//            for (int i = 0; i < keyStroke.length(); i++) {
+//                edgeNGrams.add(keyStroke.substring(0, i + 1));
+//            }
+//        }
+//
+//        return edgeNGrams.iterator();
+        return null;
     }
 
     @Override
