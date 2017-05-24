@@ -35,6 +35,18 @@ public class KuromojiSuggestTokenizerTests extends ESTestCase {
                 ).collect(Collectors.toSet()));
     }
 
+    public void testEdgeNgram() throws IOException {
+        testTokenizationWithWeight(createTokenizer(true, 256, true), "あいう",
+                Stream.of(
+                        strokeOf("a", 3),
+                        strokeOf("ai", 3),
+                        strokeOf("aiu", 3),
+                        strokeOf("あ", 3),
+                        strokeOf("あい", 3),
+                        strokeOf("あいう", 3)
+                ).collect(Collectors.toSet()));
+    }
+
     private Tokenizer createTokenizer(boolean expand, int maxExpansions, boolean edgeNgram) {
         return new KuromojiSuggestTokenizer(expand, maxExpansions, edgeNgram);
     }

@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.joining;
 
 class Keystroke implements Comparable<Keystroke> {
     private final String key;
@@ -63,7 +64,7 @@ class Keystroke implements Comparable<Keystroke> {
 
     @Override
     public String toString() {
-        return key + " (" + weightHistory.stream().map(Object::toString).collect(Collectors.joining(",")) + " - " + weight + ")";
+        return key + "(" + weight + ":" + weightHistory.stream().map(Object::toString).collect(joining(",")) + ")";
     }
 
     @Override

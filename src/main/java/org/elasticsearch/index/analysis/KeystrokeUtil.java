@@ -22,7 +22,13 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
-import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import static java.util.Comparator.reverseOrder;
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * A utility class that is used to generate key strokes from input string.
@@ -40,7 +46,7 @@ public class KeystrokeUtil {
                     parsed.entrySet().stream()
                             .filter(entry -> entry.getKey().length() == len)
                             .map(expandEntry(parsed))
-                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+                            .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)));
         }
 
         KEY_STROKE_MAP = Collections.unmodifiableMap(parsed);
@@ -101,9 +107,9 @@ public class KeystrokeUtil {
             expanded.addAll(append(new PriorityQueue<>(left), right, 256, baseWeight));
         }
         return expanded.stream()
-                .sorted(Comparator.reverseOrder())
+                .sorted(reverseOrder())
                 .map(ks -> new Keystroke(ks.getKey(), ks.getWeight())) // "squash" history
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     /**
@@ -129,8 +135,27 @@ public class KeystrokeUtil {
      */
     public static List<Keystroke> toKeyStrokes(String reading, int maxExpansions) {
         return buildKeystrokes(reading, maxExpansions).stream()
-                .sorted(Comparator.reverseOrder())
-                .collect(Collectors.toList());
+                .sorted(reverseOrder())
+                .collect(toList());
+    }
+
+    public static List<Keystroke> toEdgeNGrams(List<Keystroke> keyStrokes) {
+        // There's duplicates since each generated keystrokes can have different weight even if stroke is the same
+        // So, collect to map deduplicating
+        Map<String, Keystroke> edgeNGrams = keyStrokes.stream()
+                .flatMap(KeystrokeUtil::edgeNgrams)
+                .collect(toMap(Keystroke::getKey, ks -> ks, (ks1, ks2) -> ks1.compareTo(ks2) > 0 ? ks1 : ks2));
+
+        return edgeNGrams.values().stream()
+                .sorted(Comparator.<Keystroke>reverseOrder().thenComparingInt(ks -> ks.getKey().length()))
+                .collect(toList());
+    }
+
+    private static Stream<Keystroke> edgeNgrams(Keystroke keystroke) {
+        return IntStream.rangeClosed(1, keystroke.getKey().length())
+                .boxed()
+                .map(i -> new Keystroke(keystroke.getKey().substring(0, i), keystroke.getWeight()))
+                .collect(toList()).stream();
     }
 
     private static PriorityQueue<Keystroke> buildKeystrokes(String reading, int maxExpansions) {
@@ -212,7 +237,7 @@ public class KeystrokeUtil {
         if (prefixes.isEmpty()) {
             return suffixes.stream()
                     .limit(maxExpansions)
-                    .collect(Collectors.toCollection(PriorityQueue::new));
+                    .collect(toCollection(PriorityQueue::new));
         }
 
         return prefixes.stream()
