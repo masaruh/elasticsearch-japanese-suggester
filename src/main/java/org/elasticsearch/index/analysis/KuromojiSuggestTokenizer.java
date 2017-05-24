@@ -44,7 +44,7 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
     private final int maxExpansions;
     private final boolean edgeNGram;
 
-    private Iterator<KeystrokeUtil.Keystroke> keystrokes;
+    private Iterator<Keystroke> keystrokes;
     private boolean first = true; // First token or not.
 
     public KuromojiSuggestTokenizer(boolean expand, int maxExpansions, boolean edgeNGram) {
@@ -63,7 +63,7 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
 
         clearAttributes();
 
-        KeystrokeUtil.Keystroke keystroke = this.keystrokes.next();
+        Keystroke keystroke = this.keystrokes.next();
         String stroke = keystroke.getKey();
         this.termAtt.append(stroke);
         this.offsetAtt.setOffset(0, stroke.length());
@@ -111,7 +111,7 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
         // It may contain Hiragana. Convert it to Katakana.
         hiraganaToKatakana(readingBuilder);
 
-        List<KeystrokeUtil.Keystroke> keyStrokes;
+        List<Keystroke> keyStrokes;
         if (this.expand) {
             keyStrokes = KeystrokeUtil.toKeyStrokes(readingBuilder.toString(), this.maxExpansions);
         } else {
@@ -121,10 +121,10 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
 
         // Add original input as "keystroke"
         // Kuromoji doesn't always produce correct reading. So, we use original input for matching too.
-        String surfaceFormString = surfaceFormBuilder.toString();
-        KeystrokeUtil.Keystroke surfaceForm = new KeystrokeUtil.Keystroke(surfaceFormString, surfaceFormString.length());
-        if (!keyStrokes.contains(surfaceForm)) {
-            keyStrokes.add(surfaceForm);
+        String surfaceForm = surfaceFormBuilder.toString();
+        Keystroke surfaceFormAsKeystroke = new Keystroke(surfaceForm, surfaceForm.length());
+        if (!keyStrokes.contains(surfaceFormAsKeystroke)) {
+            keyStrokes.add(surfaceFormAsKeystroke);
         }
 
         this.keystrokes = this.edgeNGram ? toEdgeNGrams(keyStrokes) : keyStrokes.iterator();
@@ -140,7 +140,7 @@ public class KuromojiSuggestTokenizer extends Tokenizer {
         }
     }
 
-    private Iterator<KeystrokeUtil.Keystroke> toEdgeNGrams(List<KeystrokeUtil.Keystroke> keyStrokes) {
+    private Iterator<Keystroke> toEdgeNGrams(List<Keystroke> keyStrokes) {
 //        Set<String> edgeNGrams = new TreeSet<>(LENGTH_COMPARATOR);
 //        for (String keyStroke : keyStrokes) {
 //            for (int i = 0; i < keyStroke.length(); i++) {
