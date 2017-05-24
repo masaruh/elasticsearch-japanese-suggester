@@ -102,7 +102,7 @@ public class KeystrokeUtil {
         }
         return expanded.stream()
                 .sorted(Comparator.reverseOrder())
-                .map(ks -> new Keystroke(ks.key, ks.weight)) // "squash" history
+                .map(ks -> new Keystroke(ks.getKey(), ks.getWeight())) // "squash" history
                 .collect(Collectors.toList());
     }
 
@@ -220,67 +220,6 @@ public class KeystrokeUtil {
                         .map(sfx -> Keystroke.concatenate(pfx, sfx, baseWeight)))
                 .collect(new KeystrokeCollector(maxExpansions));
 
-    }
-
-    static class Keystroke implements Comparable<Keystroke> {
-        private final String key;
-        private final int weight;
-        private final List<Integer> weightHistory;
-
-        Keystroke(String key, int weight) {
-            this.key = key;
-            this.weight = weight;
-            this.weightHistory = Collections.singletonList(weight);
-        }
-
-        private Keystroke(String key, int weight, List<Integer> history) {
-            this.key = key;
-            this.weight = weight;
-            List<Integer> tmp = new ArrayList<>(history);
-            tmp.add(weight);
-            this.weightHistory = Collections.unmodifiableList(tmp);
-        }
-
-        String getKey() {
-            return this.key;
-        }
-
-        int getWeight() {
-            return weight;
-        }
-
-        List<Integer> getWeightHistory() {
-            return weightHistory;
-        }
-
-        // Order by:
-        // 1. weight descending
-        // 2. prefix (weight excluding the last keystroke) weight descending
-        // 3. key descending
-        @Override
-        public int compareTo(Keystroke other) {
-            int result = other.weight - this.weight;
-            if (result != 0) {
-                return result;
-            }
-
-            for (int i = 0; i < Math.min(this.weightHistory.size(), other.weightHistory.size()); i++) {
-                result = other.weightHistory.get(i) - this.weightHistory.get(i);
-                if (result != 0) {
-                    return result;
-                }
-            }
-            return other.key.compareTo(this.key);
-        }
-
-        private static Keystroke concatenate(Keystroke k1, Keystroke k2, int extraWeight) {
-            return new Keystroke(k1.getKey() + k2.getKey(), k1.getWeight() + k2.getWeight() + extraWeight, k1.weightHistory);
-        }
-
-        @Override
-        public String toString() {
-            return key + " (" + weightHistory.stream().map(Object::toString).collect(Collectors.joining(",")) + " - " + weight + ")";
-        }
     }
 
     private static class KeystrokeCollector implements Collector<Keystroke, PriorityQueue<Keystroke>, PriorityQueue<Keystroke>> {
