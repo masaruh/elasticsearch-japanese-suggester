@@ -34,7 +34,12 @@ import static java.util.stream.Collectors.toMap;
  * A utility class that is used to generate key strokes from input string.
  */
 public class KeystrokeUtil {
-    private static final Map<String, List<Keystroke>> KEY_STROKE_MAP;
+    // Package private for test
+    static final Map<String, List<Keystroke>> KEY_STROKE_MAP;
+
+    // Function used to deduplication
+    // Returns Keystroke that has lower weight.
+    private static final BinaryOperator<Keystroke> DEDUP_MERGE_FUNCTION = (ks1, ks2) -> ks1.compareTo(ks2) <= 0 ? ks1 : ks2;
 
     static {
         Map<String, List<Keystroke>> parsed = parseMapping();
@@ -106,7 +111,11 @@ public class KeystrokeUtil {
             }
             expanded.addAll(append(new PriorityQueue<>(left), right, 256, baseWeight));
         }
-        return expanded.stream()
+        // Deduplicate
+        Map<String, Keystroke> deduped = expanded.stream()
+                .collect(toMap(Keystroke::getKey, Function.identity(), DEDUP_MERGE_FUNCTION));
+
+        return deduped.values().stream()
                 .sorted(reverseOrder())
                 .map(ks -> new Keystroke(ks.getKey(), ks.getWeight())) // "squash" history
                 .collect(toList());
@@ -144,7 +153,7 @@ public class KeystrokeUtil {
         // So, collect to map deduplicating
         Map<String, Keystroke> edgeNGrams = keyStrokes.stream()
                 .flatMap(KeystrokeUtil::edgeNgrams)
-                .collect(toMap(Keystroke::getKey, ks -> ks, (ks1, ks2) -> ks1.compareTo(ks2) > 0 ? ks1 : ks2));
+                .collect(toMap(Keystroke::getKey, ks -> ks, DEDUP_MERGE_FUNCTION));
 
         return edgeNGrams.values().stream()
                 .sorted(Comparator.<Keystroke>reverseOrder().thenComparingInt(ks -> ks.getKey().length()))
