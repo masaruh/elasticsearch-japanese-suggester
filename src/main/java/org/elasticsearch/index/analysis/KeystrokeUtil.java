@@ -37,10 +37,6 @@ public class KeystrokeUtil {
     // Package private for test
     static final Map<String, List<Keystroke>> KEY_STROKE_MAP;
 
-    // Function used to deduplication
-    // Returns Keystroke that has lower weight.
-    private static final BinaryOperator<Keystroke> DEDUP_MERGE_FUNCTION = (ks1, ks2) -> ks1.compareTo(ks2) <= 0 ? ks1 : ks2;
-
     static {
         Map<String, List<Keystroke>> parsed = parseMapping();
 
@@ -113,7 +109,7 @@ public class KeystrokeUtil {
         }
         // Deduplicate
         Map<String, Keystroke> deduped = expanded.stream()
-                .collect(toMap(Keystroke::getKey, Function.identity(), DEDUP_MERGE_FUNCTION));
+                .collect(toMap(Keystroke::getKey, Function.identity(), Keystroke::min));
 
         return deduped.values().stream()
                 .sorted(reverseOrder())
@@ -153,7 +149,7 @@ public class KeystrokeUtil {
         // So, collect to map deduplicating
         Map<String, Keystroke> edgeNGrams = keyStrokes.stream()
                 .flatMap(KeystrokeUtil::edgeNgrams)
-                .collect(toMap(Keystroke::getKey, ks -> ks, DEDUP_MERGE_FUNCTION));
+                .collect(toMap(Keystroke::getKey, ks -> ks, Keystroke::min));
 
         return edgeNGrams.values().stream()
                 .sorted(Comparator.<Keystroke>reverseOrder().thenComparingInt(ks -> ks.getKey().length()))
