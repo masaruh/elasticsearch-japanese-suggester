@@ -20,7 +20,6 @@ public class KeystrokeUtilTests extends ESTestCase {
 
     public void testMappingHasSingleHistory() {
         KeystrokeUtil.KEY_STROKE_MAP.values().forEach(l -> l.forEach(ks -> {
-            System.out.println(ks);
             assertThat("weight history > 1" + l, ks.getWeightHistory(), hasSize(1));
                 }));
     }
