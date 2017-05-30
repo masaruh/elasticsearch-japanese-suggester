@@ -107,9 +107,14 @@ public class KeystrokeUtil {
             }
             expanded.addAll(append(new PriorityQueue<>(left), right, 256, baseWeight));
         }
-        // Deduplicate
+
+        // There may be duplicates, same keystroke but different weights because of different path.
+        // Deduplicate them by keeping smallest ones.
         Map<String, Keystroke> deduped = expanded.stream()
-                .collect(toMap(Keystroke::getKey, Function.identity(), Keystroke::min));
+                .collect(toMap(
+                        Keystroke::getKey,
+                        Function.identity(),
+                        BinaryOperator.minBy(Comparator.<Keystroke>reverseOrder())));
 
         return deduped.values().stream()
                 .sorted(reverseOrder())
@@ -149,7 +154,10 @@ public class KeystrokeUtil {
         // So, collect to map deduplicating
         Map<String, Keystroke> edgeNGrams = keyStrokes.stream()
                 .flatMap(KeystrokeUtil::edgeNgrams)
-                .collect(toMap(Keystroke::getKey, ks -> ks, Keystroke::min));
+                .collect(toMap(
+                        Keystroke::getKey,
+                        Function.identity(),
+                        BinaryOperator.minBy(Comparator.<Keystroke>reverseOrder())));
 
         return edgeNGrams.values().stream()
                 .sorted(Comparator.<Keystroke>reverseOrder().thenComparingInt(ks -> ks.getKey().length()))
