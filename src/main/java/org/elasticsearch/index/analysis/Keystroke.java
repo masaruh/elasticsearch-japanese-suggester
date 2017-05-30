@@ -62,13 +62,6 @@ class Keystroke implements Comparable<Keystroke> {
         return new Keystroke(k1.getKey() + k2.getKey(), k1.getWeight() + k2.getWeight() + extraWeight, k1.weightHistory);
     }
 
-    /**
-     * Returns keystorke with less weights.
-     */
-    static Keystroke min(Keystroke k1, Keystroke k2) {
-        return k1.compareTo(k2) > 0 ? k1 : k2;
-    }
-
     @Override
     public String toString() {
         return key + "(" + weight + ":" + weightHistory.stream().map(Object::toString).collect(joining(",")) + ")";
